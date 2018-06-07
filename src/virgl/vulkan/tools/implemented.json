@@ -4,5 +4,6 @@
     "vkEnumerateInstanceExtensionProperties",
     "vkEnumerateInstanceVersion",
     "vkEnumeratePhysicalDevices",
+    "vkGetDeviceProcAddr",
     ""
 ]

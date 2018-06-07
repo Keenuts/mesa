@@ -63,10 +63,6 @@ if with_dri_i965 or with_intel_vk
   subdir('intel')
 endif
 
-if with_virgl_vk
-  subdir('virgl')
-endif
-
 subdir('mesa')
 subdir('loader')
 if with_platform_haiku
@@ -90,6 +86,10 @@ if with_gallium
   if with_tests
     subdir('mesa/state_tracker/tests')
   endif
+endif
+
+if with_virgl_vk
+  subdir('virgl')
 endif
 
 # This must be after at least mesa, glx, and gallium, since libgl will be

@@ -3,14 +3,13 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "device.h"
 #include "icd.h"
 #include "util/macros.h"
 #include "vgl_entrypoints.h"
 #include "vtest/virgl_vtest.h"
 
-/* context for vtest connection. For now, it's all we have */
-struct vtest_device vtest_device;
+/* state of our ICD. */
+struct icd_state icd_state;
 
 
 PUBLIC VKAPI_ATTR VkResult VKAPI_CALL
@@ -22,6 +21,12 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
    const char *vulkan_driver = NULL;
 
    printf("ICD: requested version: %u\n", *pSupportedVersion);
+   if (*pSupportedVersion != 5) {
+      fprintf(stderr, "vulkan implementation only supports loader interface 5\n");
+      RETURN(VK_ERROR_INCOMPATIBLE_DRIVER);
+   }
+
+   memset(&icd_state, 0, sizeof(icd_state));
 
    /* note about the current vtest handling
     *
@@ -50,8 +55,8 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
          RETURN(VK_ERROR_DEVICE_LOST);
       }
 
-      vtest_device.connected = 1;
-      vtest_device.sock_fd = sock_fd;
+      icd_state.available = 1;
+      icd_state.io_fd = sock_fd;
       RETURN(VK_SUCCESS);
    } while (0);
 
@@ -66,7 +71,9 @@ vk_icdGetInstanceProcAddr(VkInstance instance, const char *pName)
 {
    UNUSED_PARAMETER(instance);
 
-   if (vtest_device.connected == 0) {
+   /* The loader should negociate with our driver first. Otherwise, something
+    * went wrong */
+   if (icd_state.available == 0) {
       return NULL;
    }
 

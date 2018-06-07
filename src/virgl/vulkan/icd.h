@@ -36,7 +36,14 @@
 static const int handle_dummy;
 #define DUMMY_HANDLE (void*)(&handle_dummy)
 
-extern struct virgl_vtest vtest_context;
+
+struct icd_state {
+   int available;
+   int io_fd;
+};
+
+extern struct icd_state icd_state;
+
 
 PFN_vkVoidFunction find_entrypoint(const char *name);
 

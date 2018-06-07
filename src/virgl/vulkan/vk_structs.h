@@ -14,14 +14,17 @@ struct virtiogpu
 
 struct vk_instance
 {
+   VK_LOADER_DATA loader_data;
+
    uint32_t physical_device_count;
    const VkAllocationCallbacks *allocators;
 };
 
 struct vk_physical_device
 {
-   uint32_t device_identifier;
+   VK_LOADER_DATA loader_data;
 
+   uint32_t device_identifier;
 };
 
 struct vk_queue {
@@ -41,6 +44,7 @@ struct vk_command_pool
 
 struct vk_device
 {
+   VK_LOADER_DATA loader_data;
    uint32_t device_lost;
 
    struct vk_queue queue;

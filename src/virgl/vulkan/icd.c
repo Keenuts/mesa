@@ -9,8 +9,9 @@
 #include "vgl_entrypoints.h"
 #include "vtest/virgl_vtest.h"
 
-int handle_dummy;
+/* context for vtest connection. For now, it's all we have */
 struct vtest_device vtest_device;
+
 
 PUBLIC VKAPI_ATTR VkResult VKAPI_CALL
 vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
@@ -22,6 +23,14 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
 
    printf("ICD: requested version: %u\n", *pSupportedVersion);
 
+   /* note about the current vtest handling
+    *
+    * Now, I only consider vtest. So call will be made directly in ICD's funcions.
+    * What should be done is to init a struct here containing callbacks
+    * with the backend's API.
+    * Thus, we only need to init it here with either vtest's callbacks, or
+    * a real backend.
+    */
    do {
       vulkan_driver = getenv(ENV_VULKAN_DRIVER);
       if (vulkan_driver == NULL) {

@@ -172,7 +172,8 @@ vgl_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice device,
    RETURN(VK_SUCCESS);
 }
 
-static struct vk_device* initialize_vk_device(const VkAllocationCallbacks * allocators)
+static struct vk_device *
+initialize_vk_device(const VkAllocationCallbacks * allocators)
 {
    struct vk_device *device = NULL;
 
@@ -233,10 +234,10 @@ vgl_vkCreateDevice(VkPhysicalDevice phys_device,
    RETURN(VK_SUCCESS);
 }
 
-void vgl_vkGetDeviceQueue(VkDevice device,
-                          uint32_t queue_family_index,
-                          uint32_t queue_index,
-                          VkQueue *queue)
+void
+vgl_vkGetDeviceQueue(VkDevice device,
+                     uint32_t queue_family_index,
+                     uint32_t queue_index, VkQueue * queue)
 {
    TRACE_IN();
    UNUSED_PARAMETER(device);
@@ -258,10 +259,11 @@ void vgl_vkGetDeviceQueue(VkDevice device,
    RETURN();
 }
 
-VkResult vgl_vkCreateDescriptorPool(VkDevice device,
-                                    const VkDescriptorPoolCreateInfo *create_info,
-                                    const VkAllocationCallbacks *allocators,
-                                    VkDescriptorPool *pool)
+VkResult
+vgl_vkCreateDescriptorPool(VkDevice device,
+                           const VkDescriptorPoolCreateInfo * create_info,
+                           const VkAllocationCallbacks * allocators,
+                           VkDescriptorPool * pool)
 {
    TRACE_IN();
 
@@ -270,7 +272,7 @@ VkResult vgl_vkCreateDescriptorPool(VkDevice device,
    UNUSED_PARAMETER(allocators);
    UNUSED_PARAMETER(pool);
 
-   struct vk_device *dev = (void*)device;
+   struct vk_device *dev = FROM_HANDLE(dev, device);
 
    /* for now, no pool. We are stupid and we will allocate/free every time */
    dev->descriptor_pool.allocators = allocators;
@@ -279,10 +281,11 @@ VkResult vgl_vkCreateDescriptorPool(VkDevice device,
    RETURN(VK_SUCCESS);
 }
 
-VkResult vgl_vkCreateCommandPool(VkDevice device,
-                                    const VkCommandPoolCreateInfo *create_info,
-                                    const VkAllocationCallbacks *allocators,
-                                    VkCommandPool *pool)
+VkResult
+vgl_vkCreateCommandPool(VkDevice device,
+                        const VkCommandPoolCreateInfo * create_info,
+                        const VkAllocationCallbacks * allocators,
+                        VkCommandPool * pool)
 {
    TRACE_IN();
 
@@ -291,7 +294,7 @@ VkResult vgl_vkCreateCommandPool(VkDevice device,
    UNUSED_PARAMETER(allocators);
    UNUSED_PARAMETER(pool);
 
-   struct vk_device *dev = (void*)device;
+   struct vk_device *dev = FROM_HANDLE(dev, device);
 
    /* for now, no pool. We are stupid and we will allocate/free every time */
    dev->command_pool.allocators = allocators;

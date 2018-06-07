@@ -4,6 +4,13 @@
 #include "icd.h"
 #include "vgl_entrypoints.h"
 
+struct symbol
+{
+   PFN_vkVoidFunction pfn;
+   uint32_t name_hash;
+   const char *name;
+};
+
 static uint32_t get_hash(const char *name)
 {
     unsigned long h = 0;

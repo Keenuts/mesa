@@ -36,15 +36,6 @@
 static const int handle_dummy;
 #define DUMMY_HANDLE (void*)(&handle_dummy)
 
-
-struct symbol
-{
-   PFN_vkVoidFunction pfn;
-   uint32_t name_hash;
-   const char *name;
-};
-
-extern const struct symbol __symtab[];
 extern struct virgl_vtest vtest_context;
 
 PFN_vkVoidFunction find_entrypoint(const char *name);

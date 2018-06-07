@@ -78,12 +78,7 @@ vgl_vkEnumerateInstanceVersion(uint32_t * pApiVersion)
 {
    TRACE_IN();
 
-   struct vk_api_version version;
-   version.major = 1;
-   version.minor = 1;
-   version.patch = 0;
-
-   *pApiVersion = version.raw;
+   *pApiVersion = VK_MAKE_VERSION(1, 1, 0);
    RETURN(VK_SUCCESS);
 }
 

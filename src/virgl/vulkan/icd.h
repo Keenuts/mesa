@@ -34,21 +34,6 @@ struct symbol
    const char *name;
 };
 
-struct vk_api_version
-{
-   union
-   {
-      struct
-      {
-         uint32_t major:10;
-         uint32_t minor:10;
-         uint32_t patch:12;
-      };
-      uint32_t raw;
-   };
-} __attribute__ ((__packed__));
-
-
 extern const struct symbol __symtab[];
 extern struct virgl_vtest vtest_context;
 

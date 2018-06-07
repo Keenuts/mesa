@@ -5,9 +5,12 @@ vgl_vtest_files = files(
 libvtest_virgl = static_library(
     'vtest_virgl',
     [ vgl_vtest_files ],
-    c_args : c_vis_args,
+    c_args : vgl_flags,
     include_directories : [
         inc_common,
         inc_virgl,
-    ]
+    ],
+    link_with: [
+        libgallium,
+    ],
 )

@@ -53,25 +53,18 @@ vgl_vulkan_files = files(
     'vgl_device.c',
 )
 
-vgl_flags = [
-    c_vis_args,
-    no_override_init_args,
-    '-Wall',
-    '-Wextra',
-    '-Werror',
-]
-
 libvulkan_virgl = shared_library(
     'vulkan_virgl',
     [ vgl_entrypoints, vgl_vulkan_files ],
+    c_args : vgl_flags,
     include_directories : [
         inc_common,
         inc_virgl,
     ],
     link_with: [
         libmesa_util,
+        libvtest_virgl,
     ],
-    c_args : vgl_flags,
     dependencies : [ ],
     link_args : [],
     install : true

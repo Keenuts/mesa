@@ -237,3 +237,83 @@ vgl_vkCreateDevice(VkPhysicalDevice phys_device,
 
    RETURN(VK_SUCCESS);
 }
+
+void vgl_vkGetDeviceQueue(VkDevice device,
+                          uint32_t queue_family_index,
+                          uint32_t queue_index,
+                          VkQueue *queue)
+{
+   TRACE_IN();
+   UNUSED_PARAMETER(device);
+
+   *queue = VK_NULL_HANDLE;
+
+   if (queue_family_index != 0) {
+      RETURN();
+   }
+
+   if (queue_index != 0) {
+      RETURN();
+   }
+
+   /* Just set some value if the app wants to check for NULL_HANDLE
+    * but we do not use it for now */
+   *queue = DUMMY_HANDLE;
+
+   RETURN();
+}
+
+VkResult vgl_vkCreateDescriptorPool(VkDevice device,
+                                    const VkDescriptorPoolCreateInfo *create_info,
+                                    const VkAllocationCallbacks *allocators,
+                                    VkDescriptorPool *pool)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(create_info);
+   UNUSED_PARAMETER(allocators);
+   UNUSED_PARAMETER(pool);
+
+   struct vk_device *dev = (void*)device;
+
+   /* for now, no pool. We are stupid and we will allocate/free every time */
+   dev->descriptor_pool.allocators = allocators;
+
+   *pool = TO_HANDLE(&dev->descriptor_pool);
+   RETURN(VK_SUCCESS);
+}
+
+VkResult vgl_vkCreateCommandPool(VkDevice device,
+                                    const VkCommandPoolCreateInfo *create_info,
+                                    const VkAllocationCallbacks *allocators,
+                                    VkCommandPool *pool)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(create_info);
+   UNUSED_PARAMETER(allocators);
+   UNUSED_PARAMETER(pool);
+
+   struct vk_device *dev = (void*)device;
+
+   /* for now, no pool. We are stupid and we will allocate/free every time */
+   dev->command_pool.allocators = allocators;
+
+   *pool = TO_HANDLE(&dev->command_pool);
+   RETURN(VK_SUCCESS);
+}
+
+/*
+VkResult vkCreateDescriptorSetLayout(VkDevice device,
+                                     const VkDescriptorSetLayoutCreateInfo *info,
+                                     const VkAllocationCallbacks *allocators,
+                                     VkDescriptorSetLayout *layout)
+{
+   TRACE_IN();
+
+
+   RETURN(VK_SUCCESS);
+}
+*/

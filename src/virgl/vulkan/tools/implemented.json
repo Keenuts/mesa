@@ -9,5 +9,8 @@
     "vkEnumerateDeviceExtensionProperties",
     "vkCreateDevice",
     "vkGetDeviceProcAddr",
+    "vkGetDeviceQueue",
+    "vkCreateDescriptorPool",
+    "vkCreateCommandPool",
     ""
 ]

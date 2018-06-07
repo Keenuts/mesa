@@ -1,8 +1,8 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "vgl_entrypoints.h"
 #include "icd.h"
+#include "vgl_entrypoints.h"
 
 static uint32_t get_hash(const char *name)
 {

@@ -6,22 +6,7 @@
 #include "util/vector.h"
 #include "vgl_entrypoints.h"
 #include "vgl_structs.h"
-
-static void *
-vk_malloc(size_t size,
-          const VkAllocationCallbacks * allocators,
-          VkSystemAllocationScope scope)
-{
-   if (allocators == NULL) {
-      return malloc(size);
-   }
-
-   if (allocators->pfnAllocation != NULL) {
-      return allocators->pfnAllocation(allocators->pUserData, size, 2, scope);
-   }
-
-   return malloc(size);
-}
+#include "memory.h"
 
 VkResult
 vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
@@ -177,12 +162,7 @@ initialize_vk_device(const VkAllocationCallbacks * allocators)
 {
    struct vk_device *device = NULL;
 
-   device = vk_malloc(sizeof(device), allocators, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
-   if (device == NULL) {
-      return NULL;
-   }
-
-   memset(device, 0, sizeof(*device));
+   device = vk_calloc(sizeof(device), allocators, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
 
    return device;
 }

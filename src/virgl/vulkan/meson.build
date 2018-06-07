@@ -51,6 +51,7 @@ dev_icd = custom_target(
 vgl_vulkan_files = files(
     'icd.c',
     'vgl_device.c',
+    'memory.c',
 )
 
 libvulkan_virgl = shared_library(

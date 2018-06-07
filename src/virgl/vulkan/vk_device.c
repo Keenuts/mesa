@@ -67,6 +67,12 @@ vgl_vkEnumerateInstanceVersion(uint32_t * pApiVersion)
    RETURN(VK_SUCCESS);
 }
 
+/* We only expose one V-gpu for now */
+static struct virtiogpu physical_device = {
+   .api_version = VK_MAKE_VERSION(1, 1, 0),
+   .driver_version = VK_MAKE_VERSION(0, 0, 1),
+};
+
 VkResult
 vgl_vkEnumeratePhysicalDevices(VkInstance instance,
                                uint32_t * device_count,

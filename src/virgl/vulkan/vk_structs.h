@@ -5,16 +5,12 @@
 
 #include "util/vector.h"
 
+/* This struct describes a physical device */
 struct virtiogpu
 {
    uint32_t api_version;
    uint32_t driver_version;
-
-   uint32_t available_devices;
-   struct vector physical_devices;
 };
-
-struct virtiogpu physical_device;
 
 struct vk_instance
 {

@@ -5,7 +5,7 @@
 #include "icd.h"
 #include "util/vector.h"
 #include "vgl_entrypoints.h"
-#include "vgl_structs.h"
+#include "vk_structs.h"
 #include "memory.h"
 
 VkResult

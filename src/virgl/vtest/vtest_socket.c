@@ -21,107 +21,102 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <sys/socket.h>
 #include <errno.h>
-#include <stdio.h>
 #include <netinet/in.h>
+#include <os/os_process.h>
+#include <stdio.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-
-#include <os/os_process.h>
 #include <util/u_format.h>
-/* connect to remote socket */
-#define VTEST_SOCKET_NAME "/tmp/.virgl_test"
 
 #include "vtest_protocol.h"
 #include "virgl_vtest.h"
 
+#define VTEST_SOCKET_NAME "/tmp/.virgl_test"
+
 /* block read/write routines */
-int virgl_block_write(int fd, void *buf, int size)
+int virgl_block_write(int fd, const void *ptr, int size)
 {
-   void *ptr = buf;
-   int left;
-   int ret;
-   left = size;
-   do {
-      ret = write(fd, ptr, left);
-      if (ret < 0)
-         return -errno;
-      left -= ret;
-      ptr += ret;
-   } while (left);
-   return size;
+    int left;
+    int ret;
+    left = size;
+    do {
+        ret = write(fd, ptr, left);
+        if (ret < 0)
+            return -errno;
+        left -= ret;
+        ptr += ret;
+    } while (left);
+    return size;
 }
 
 int virgl_block_read(int fd, void *buf, int size)
 {
-   void *ptr = buf;
-   int left;
-   int ret;
-   left = size;
-   do {
-      ret = read(fd, ptr, left);
-      if (ret <= 0) {
-         fprintf(stderr,
-                 "lost connection to rendering server on %d read %d %d\n",
-                 size, ret, errno);
-         abort();
-         return ret < 0 ? -errno : 0;
-      }
-      left -= ret;
-      ptr += ret;
-   } while (left);
-   return size;
+    void *ptr = buf;
+    int left;
+    int ret;
+    left = size;
+    do {
+        ret = read(fd, ptr, left);
+        if (ret <= 0) {
+            fprintf(stderr,
+                    "lost connection to rendering server on %d read %d %d\n",
+                    size, ret, errno);
+            abort();
+            return ret < 0 ? -errno : 0;
+        }
+        left -= ret;
+        ptr += ret;
+    } while (left);
+    return size;
 }
 
-static int virgl_vtest_send_init(struct virgl_vtest *vtest)
+static int virgl_vtest_send_init(int sock)
 {
-   uint32_t buf[VTEST_HDR_SIZE];
-   const char *nstr = "virtest";
-   char cmdline[64];
-   int ret;
+    uint32_t buf[VTEST_HDR_SIZE];
+    const char APP_NAME[] = "virglrenderer-vulkan-icd";
 
-   ret = os_get_process_name(cmdline, 63);
-   if (ret == FALSE)
-      strcpy(cmdline, nstr);
-#if defined(__GLIBC__) || defined(__CYGWIN__)
-   if (!strcmp(cmdline, "shader_runner")) {
-      const char *name;
-      /* hack to get better testname */
-      name = program_invocation_short_name;
-      name += strlen(name) + 1;
-      strncpy(cmdline, name, 63);
-   }
-#endif
-   buf[VTEST_CMD_LEN] = strlen(cmdline) + 1;
-   buf[VTEST_CMD_ID] = VCMD_CREATE_RENDERER;
+    buf[VTEST_CMD_ID] = VCMD_CREATE_RENDERER;
+    buf[VTEST_CMD_LEN] = ARRAY_SIZE(APP_NAME);
 
-   virgl_block_write(vtest->sock_fd, &buf, sizeof(buf));
-   virgl_block_write(vtest->sock_fd, (void *)cmdline, strlen(cmdline) + 1);
-   return 0;
+    if (virgl_block_write(sock, &buf, sizeof(buf)) < 0) {
+       return -1;
+    }
+
+    if (virgl_block_write(sock, (void*)APP_NAME, ARRAY_SIZE(APP_NAME)) < 0) {
+       return -1;
+    }
+
+    return 0;
 }
 
-int virgl_vtest_connect(struct virgl_vtest *vtest)
+int virgl_vtest_connect(void)
 {
-   struct sockaddr_un un;
-   int sock, ret;
+    struct sockaddr_un un;
+    int sock, ret;
 
-   sock = socket(PF_UNIX, SOCK_STREAM, 0);
-   if (sock < 0)
-      return -1;
+    sock = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0)
+        return -1;
 
-   memset(&un, 0, sizeof(un));
-   un.sun_family = AF_UNIX;
-   snprintf(un.sun_path, sizeof(un.sun_path), "%s", VTEST_SOCKET_NAME);
+    memset(&un, 0, sizeof(un));
+    un.sun_family = AF_UNIX;
+    snprintf(un.sun_path, sizeof(un.sun_path), "%s", VTEST_SOCKET_NAME);
 
-   do {
-      ret = 0;
-      if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
-         ret = -errno;
-      }
-   } while (ret == -EINTR);
+    do {
+        ret = 0;
+        if (connect(sock, (struct sockaddr *)&un, sizeof(un)) < 0) {
+            ret = -errno;
+        }
+    } while (ret == -EINTR);
 
-   vtest->sock_fd = sock;
-   virgl_vtest_send_init(vtest);
-   return 0;
+    printf("vtest: connected (%d)\n", sock);
+
+    if (virgl_vtest_send_init(sock) < 0) {
+       close(sock);
+       return -1;
+    }
+
+    return sock;
 }

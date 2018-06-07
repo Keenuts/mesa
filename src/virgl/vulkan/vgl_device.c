@@ -2,105 +2,238 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
+#include "icd.h"
+#include "util/vector.h"
 #include "vgl_entrypoints.h"
+#include "vgl_structs.h"
 
-#ifdef DEBUG
-    #define TRACE_IN() fprintf(stderr, "--> %s\n", __func__)
-    #define TRACE_OUT(...) \
-        do {    \
-            char *fmt = "<-- %s (%d)\n"; \
-            fprintf(stderr, fmt, __func__ __VA_OPT__(,) __VA_ARGS__ , 0); \
-        } while (0)
-#else
-    #define TRACE_IN()
-    #define TRACE_OUT(...)
-#endif
-
-#define UNUSED_PARAMETER(Param) (void)(Param)
-#define RETURN(...)         \
-    TRACE_OUT(__VA_ARGS__); \
-    return __VA_ARGS__
-
-VkResult vgl_vkCreateInstance(
-    const VkInstanceCreateInfo *create_info,
-    const VkAllocationCallbacks *allocator,
-    VkInstance *instance)
+static void *
+vk_malloc(size_t size,
+          const VkAllocationCallbacks * allocators,
+          VkSystemAllocationScope scope)
 {
-    TRACE_IN();
-    (void)create_info;
-    (void)allocator;
-    (void)instance;
+   if (allocators == NULL) {
+      return malloc(size);
+   }
 
-    *instance = malloc(sizeof(int));
+   if (allocators->pfnAllocation != NULL) {
+      return allocators->pfnAllocation(allocators->pUserData, size, 2, scope);
+   }
 
-    RETURN(VK_SUCCESS);
+   return malloc(size);
 }
 
-void vgl_vkDestroyInstance(
-    VkInstance instance,
-    const VkAllocationCallbacks *allocators)
+VkResult
+vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
+                     const VkAllocationCallbacks * allocators,
+                     VkInstance * instance)
 {
-    TRACE_IN();
+   TRACE_IN();
+   UNUSED_PARAMETER(create_info);
 
-    (void)allocators;
-    free(instance);
-    
-    RETURN();
+   struct vk_instance *internal_instance = NULL;
+
+   internal_instance = vk_malloc(sizeof(*internal_instance), allocators,
+                                 VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
+
+   internal_instance->physical_device_count = UINT32_MAX;
+   internal_instance->allocators = allocators;
+
+   if (internal_instance == NULL) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   *instance = TO_HANDLE(internal_instance);
+   RETURN(VK_SUCCESS);
 }
 
-VkResult vgl_vkEnumerateInstanceExtensionProperties(
-    const char *layer_name,
-    uint32_t *property_count,
-    VkExtensionProperties *properties)
+void
+vgl_vkDestroyInstance(VkInstance instance,
+                      const VkAllocationCallbacks * allocators)
 {
-    TRACE_IN();
-    (void)layer_name;
-    (void)properties;
+   TRACE_IN();
 
-    *property_count = 0;
+   UNUSED_PARAMETER(allocators);
+   free(instance);
 
-    RETURN(VK_SUCCESS);
+   RETURN();
 }
 
-struct vk_api_version {
-    union {
-        struct {
-            uint32_t major : 10;
-            uint32_t minor : 10;
-            uint32_t patch : 12;
-        };
-        uint32_t raw;
-    };
-} __attribute__((__packed__));
-
-VkResult vgl_vkEnumerateInstanceVersion(
-    uint32_t *pApiVersion)
+VkResult
+vgl_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+                                           uint32_t * property_count,
+                                           VkExtensionProperties * properties)
 {
-    TRACE_IN();
+   TRACE_IN();
+   UNUSED_PARAMETER(layer_name);
+   UNUSED_PARAMETER(properties);
 
-    struct vk_api_version version;
-    version.major = 1;
-    version.minor = 1;
-    version.patch = 0;
+   *property_count = 0;
 
-    *pApiVersion = version.raw;
-    RETURN(VK_SUCCESS);
+   RETURN(VK_SUCCESS);
 }
 
-VkResult vgl_vkEnumeratePhysicalDevices(
-    VkInstance instance,
-    uint32_t *device_count,
-    VkPhysicalDevice *physical_devices)
+VkResult
+vgl_vkEnumerateInstanceVersion(uint32_t * pApiVersion)
 {
-    TRACE_IN();
-    (void)instance;
+   TRACE_IN();
 
-    if (physical_devices == NULL) {
-        *device_count = 1;
-        RETURN(VK_SUCCESS);
-    }
+   struct vk_api_version version;
+   version.major = 1;
+   version.minor = 1;
+   version.patch = 0;
 
-    *physical_devices = malloc(sizeof(int));
+   *pApiVersion = version.raw;
+   RETURN(VK_SUCCESS);
+}
 
-    RETURN(VK_SUCCESS);
+VkResult
+vgl_vkEnumeratePhysicalDevices(VkInstance instance,
+                               uint32_t * device_count,
+                               VkPhysicalDevice * physical_devices)
+{
+   TRACE_IN();
+   UNUSED_PARAMETER(instance);
+
+   if (physical_devices == NULL) {
+      *device_count = 1;
+      RETURN(VK_SUCCESS);
+   }
+
+   *physical_devices = (void *) &physical_device;
+
+   RETURN(VK_SUCCESS);
+}
+
+void
+vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
+                                  VkPhysicalDeviceProperties * properties)
+{
+   TRACE_IN();
+
+   struct virtiogpu *gpu = (struct virtiogpu *) device;
+   VkPhysicalDeviceSparseProperties sparse_props;
+   memset(&sparse_props, 0, sizeof(sparse_props));
+
+   properties->apiVersion = gpu->api_version;
+   properties->driverVersion = gpu->driver_version;
+   properties->vendorID = REDHAT_VENDOR_ID;
+   properties->deviceID = VIRTIOGPU_DEVICE_ID;
+   properties->deviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
+
+   strncpy(properties->deviceName, "VirtIO-gpu",
+           VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
+   properties->sparseProperties = sparse_props;
+
+   RETURN();
+}
+
+struct VkQueueFamilyProperties virgl_queue_families[] = {
+   {
+    .queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT |
+    VK_QUEUE_TRANSFER_BIT,
+    .queueCount = 1,
+    .timestampValidBits = 0,    /* 0 means no support. 36 to 64 are valid values */
+    .minImageTransferGranularity = {1, 1, 1},
+    },
+};
+
+void
+vgl_vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device,
+                                             uint32_t * queue_count,
+                                             VkQueueFamilyProperties *
+                                             queues_properties)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+
+   *queue_count = 1;
+
+   if (queues_properties == NULL) {
+      RETURN();
+   }
+
+   memcpy(queues_properties, virgl_queue_families,
+          sizeof(virgl_queue_families));
+   RETURN();
+}
+
+VkResult
+vgl_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice device,
+                                         const char *layer_name,
+                                         uint32_t * properties_count,
+                                         VkExtensionProperties * properties)
+{
+   TRACE_IN();
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(layer_name);
+   UNUSED_PARAMETER(properties_count);
+   UNUSED_PARAMETER(properties);
+
+   /* we do not have any extensions, so none */
+   *properties_count = 0;
+
+   RETURN(VK_SUCCESS);
+}
+
+static struct vk_device* initialize_vk_device(const VkAllocationCallbacks * allocators)
+{
+   struct vk_device *device = NULL;
+
+   device = vk_malloc(sizeof(device), allocators, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (device == NULL) {
+      return NULL;
+   }
+
+   memset(device, 0, sizeof(*device));
+
+   return device;
+}
+
+VkResult
+vgl_vkCreateDevice(VkPhysicalDevice phys_device,
+                   const VkDeviceCreateInfo * info,
+                   const VkAllocationCallbacks * allocators,
+                   VkDevice * device)
+{
+   TRACE_IN();
+   const VkDeviceQueueCreateInfo *queue_info = NULL;
+   const VkPhysicalDeviceFeatures *feature_info = NULL;
+
+   if (info->queueCreateInfoCount > 1) {
+      RETURN(VK_ERROR_TOO_MANY_OBJECTS);
+   }
+
+   if (info->enabledLayerCount != 0) {
+      RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+   }
+
+   if (info->enabledExtensionCount != 0) {
+      RETURN(VK_ERROR_EXTENSION_NOT_PRESENT);
+   }
+
+   queue_info = info->pQueueCreateInfos;
+   feature_info = info->pEnabledFeatures;
+
+   if (queue_info->sType != VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO) {
+      RETURN(VK_ERROR_INITIALIZATION_FAILED);
+   }
+
+   if (queue_info->queueFamilyIndex != 0 || queue_info->queueCount > 1) {
+      RETURN(VK_ERROR_INITIALIZATION_FAILED);
+   }
+
+   UNUSED_PARAMETER(phys_device);
+   UNUSED_PARAMETER(allocators);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(feature_info);
+
+   *device = TO_HANDLE(initialize_vk_device(allocators));
+
+   if (*device == NULL) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   RETURN(VK_SUCCESS);
 }

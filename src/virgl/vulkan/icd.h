@@ -31,12 +31,6 @@
 #define TO_HANDLE(Handle) (void*)(Handle)
 #define FROM_HANDLE(Dst, Src) (__typeof__(Dst))(Src)
 
-
-/* Dummy handle to give when we do not have anything useful to give */
-static const int handle_dummy;
-#define DUMMY_HANDLE (void*)(&handle_dummy)
-
-
 struct icd_state {
    int available;
    int io_fd;

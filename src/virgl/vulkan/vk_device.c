@@ -234,7 +234,8 @@ vgl_vkGetDeviceQueue(VkDevice device,
 
    /* Just set some value if the app wants to check for NULL_HANDLE
     * but we do not use it for now */
-   *queue = DUMMY_HANDLE;
+   struct vk_device *dev = FROM_HANDLE(dev, device);
+   *queue = TO_HANDLE(&dev->queue);
 
    RETURN();
 }

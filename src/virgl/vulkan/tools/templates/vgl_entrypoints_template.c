@@ -27,7 +27,7 @@ static uint32_t get_hash(const char *name)
     return h;
 }
 
-% for e in non_implemented:
+% for e in non_listed:
     static void vgl_${e.name}(void)
     {
         fprintf(stderr, "ICD: called unimplemented '%s'. Aborting now.\n", __func__);
@@ -36,11 +36,11 @@ static uint32_t get_hash(const char *name)
 % endfor
 
 const struct symbol __symtab[] = {
-    % for e in implemented:
+    % for e in listed:
         { (PFN_vkVoidFunction)vgl_${e.name}, ${e.hash}, "${e.name}" },
     % endfor
 
-    % for e in non_implemented:
+    % for e in non_listed:
         { vgl_${e.name}, ${e.hash}, "${e.name}" },
     % endfor
 };

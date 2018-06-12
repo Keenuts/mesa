@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 
-% for e in implemented:
+% for e in listed:
 ${e.ret_value} vgl_${e.name}(
     % for p in e.params:
         % if loop.last:

@@ -3,8 +3,6 @@
 
 #include <vulkan/vk_icd.h>
 
-#include "util/vector.h"
-
 /* This struct describes a physical device */
 struct virtiogpu
 {

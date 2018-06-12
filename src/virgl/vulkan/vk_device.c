@@ -2,11 +2,11 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
+#include "common/macros.h"
 #include "icd.h"
-#include "util/vector.h"
+#include "memory.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
-#include "memory.h"
 
 VkResult
 vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,

@@ -8,7 +8,7 @@ vgl_flags = [
     '-Werror',
 ]
 
-subdir('util')
+subdir('common')
 subdir('vtest')
 
 if with_virgl_vk

@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "icd.h"
-#include "util/macros.h"
+#include "common/macros.h"
 #include "vgl_entrypoints.h"
 #include "vtest/virgl_vtest.h"
 

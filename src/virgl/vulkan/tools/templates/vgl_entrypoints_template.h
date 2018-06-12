@@ -1,3 +1,6 @@
+#ifndef VGL_ENTRYPOINT_H
+#define VGL_ENTRYPOINT_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -14,3 +17,5 @@ ${e.ret_value} vgl_${e.name}(
     % endfor
 );
 % endfor
+
+#endif

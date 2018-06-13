@@ -7,6 +7,7 @@
 #include "memory.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
+#include "vtest/virgl_vtest.h"
 
 VkResult
 vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
@@ -67,26 +68,43 @@ vgl_vkEnumerateInstanceVersion(uint32_t * pApiVersion)
    RETURN(VK_SUCCESS);
 }
 
-/* We only expose one V-gpu for now */
-static struct virtiogpu physical_device = {
-   .api_version = VK_MAKE_VERSION(1, 1, 0),
-   .driver_version = VK_MAKE_VERSION(0, 0, 1),
-};
-
 VkResult
 vgl_vkEnumeratePhysicalDevices(VkInstance instance,
                                uint32_t * device_count,
                                VkPhysicalDevice * physical_devices)
 {
+   int res;
+   uint32_t count;
+   static struct vk_physical_device *devices = NULL;
+
    TRACE_IN();
    UNUSED_PARAMETER(instance);
 
+   res = vtest_send_enumerate_physical_devices(icd_state.io_fd, &count);
+   if (res < 0) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
    if (physical_devices == NULL) {
-      *device_count = 1;
+      *device_count = count;
       RETURN(VK_SUCCESS);
    }
 
-   *physical_devices = (void *) &physical_device;
+   if (devices == NULL) {
+      devices = malloc(sizeof(*devices) * count);
+      if (devices == NULL) {
+         RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      }
+
+      for (uint32_t i = 0; i < count; i++) {
+         devices[i].device_identifier = i;
+      }
+   }
+
+   count = MIN2(count, *device_count);
+   for (uint32_t i = 0; i < count; i++) {
+      physical_devices[i] = TO_HANDLE(devices + 1);
+   }
 
    RETURN(VK_SUCCESS);
 }

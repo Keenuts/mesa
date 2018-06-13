@@ -1,5 +1,6 @@
 vgl_vtest_files = files(
     'vtest_socket.c',
+    'vtest_device.c',
 )
 
 libvtest_virgl = static_library(

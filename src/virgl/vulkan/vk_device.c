@@ -114,6 +114,19 @@ vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
    RETURN();
 }
 
+void
+vgl_vkGetPhysicalDeviceFeatures(VkPhysicalDevice device,
+                                VkPhysicalDeviceFeatures *features)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   memset(features, 0, sizeof(*features));
+
+   RETURN();
+}
+
+
 struct VkQueueFamilyProperties virgl_queue_families[] = {
    {
     .queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT |

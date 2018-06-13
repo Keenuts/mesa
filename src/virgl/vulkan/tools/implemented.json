@@ -5,6 +5,7 @@
     "vkEnumerateInstanceVersion",
     "vkEnumeratePhysicalDevices",
     "vkGetPhysicalDeviceProperties",
+    "vkGetPhysicalDeviceFeatures",
     "vkGetPhysicalDeviceQueueFamilyProperties",
     "vkEnumerateDeviceExtensionProperties",
     "vkCreateDevice",

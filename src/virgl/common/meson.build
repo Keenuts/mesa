@@ -1,7 +1,7 @@
 
 utils_files = files(
-    'vector.c',
-    'vector.h',
+    'list.c',
+    'list.h',
 )
 
 libutils_virgl = static_library(

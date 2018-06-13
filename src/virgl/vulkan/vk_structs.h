@@ -45,6 +45,7 @@ struct vk_device
    VK_LOADER_DATA loader_data;
    uint32_t device_lost;
 
+   uint32_t device_id;
    struct vk_queue queue;
    struct vk_descriptor_pool descriptor_pool;
    struct vk_command_pool command_pool;

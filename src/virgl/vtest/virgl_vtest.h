@@ -30,7 +30,7 @@ int virgl_block_read(int fd, void *buf, int size);
 int virgl_vtest_connect(void);
 
 int vtest_send_create_device(int sock_fd);
-int vtest_send_enumerate_physical_devices(int sock_fd, uint32_t *device_count);
+int vtest_send_get_physical_device_count(int sock_fd, uint32_t *device_count);
 int vtest_send_get_sparse_properties(int sock_fd,
                                      int device_id,
                                      VkPhysicalDeviceSparseProperties *props);

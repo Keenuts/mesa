@@ -52,7 +52,8 @@
 /* resp VCMD_GET_CAPS + caps */
 
 #define VCMD_VK_CREATE_DEVICE 9
-#define VCMD_VK_ENUMERATE_PHYSICAL_DEVICES 9
+#define VCMD_VK_ENUMERATE_PHYSICAL_DEVICES 10
+#define VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES 11
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -87,5 +88,9 @@
 #define VCMD_BUSY_WAIT_SIZE 2
 #define VCMD_BUSY_WAIT_HANDLE 0
 #define VCMD_BUSY_WAIT_FLAGS 1
+
+struct vtest_payload_device_get {
+   uint32_t device_id;
+};
 
 #endif

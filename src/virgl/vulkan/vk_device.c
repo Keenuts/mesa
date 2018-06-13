@@ -74,36 +74,36 @@ vgl_vkEnumeratePhysicalDevices(VkInstance instance,
                                VkPhysicalDevice * physical_devices)
 {
    int res;
-   uint32_t count;
    static struct vk_physical_device *devices = NULL;
+   static uint32_t count = 0;
 
    TRACE_IN();
    UNUSED_PARAMETER(instance);
 
-   res = vtest_send_enumerate_physical_devices(icd_state.io_fd, &count);
-   if (res < 0) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+   if (count == 0) {
+      res = vtest_send_get_physical_device_count(icd_state.io_fd, &count);
+      if (res < 0) {
+         RETURN(VK_ERROR_DEVICE_LOST);
+      }
+
+      if (devices == NULL) {
+         devices = malloc(sizeof(*devices) * count);
+         if (devices == NULL) {
+            RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+         }
+
+         for (uint32_t i = 0; i < count; i++) {
+            devices[i].device_identifier = i;
+         }
+      }
    }
 
    if (physical_devices == NULL) {
       *device_count = count;
-      RETURN(VK_SUCCESS);
-   }
-
-   if (devices == NULL) {
-      devices = malloc(sizeof(*devices) * count);
-      if (devices == NULL) {
-         RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
-      }
-
+   } else {
       for (uint32_t i = 0; i < count; i++) {
-         devices[i].device_identifier = i;
+         physical_devices[i] = TO_HANDLE(devices + i);
       }
-   }
-
-   count = MIN2(count, *device_count);
-   for (uint32_t i = 0; i < count; i++) {
-      physical_devices[i] = TO_HANDLE(devices + 1);
    }
 
    RETURN(VK_SUCCESS);
@@ -111,23 +111,31 @@ vgl_vkEnumeratePhysicalDevices(VkInstance instance,
 
 void
 vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
-                                  VkPhysicalDeviceProperties * properties)
+                                  VkPhysicalDeviceProperties *properties)
 {
+   int res;
+   struct vk_physical_device *dev;
+
    TRACE_IN();
 
-   struct virtiogpu *gpu = (struct virtiogpu *) device;
-   VkPhysicalDeviceSparseProperties sparse_props;
-   memset(&sparse_props, 0, sizeof(sparse_props));
+   memset(properties, 0, sizeof(*properties));
 
-   properties->apiVersion = gpu->api_version;
-   properties->driverVersion = gpu->driver_version;
+   dev = FROM_HANDLE(dev, device);
+   res = vtest_send_get_sparse_properties(icd_state.io_fd,
+                                          dev->device_identifier,
+                                          &properties->sparseProperties);
+   if (res != 0) {
+      RETURN();
+   }
+
+   properties->apiVersion = VK_MAKE_VERSION(1, 0, 0);
+   properties->driverVersion = VK_MAKE_VERSION(1, 0, 0);
    properties->vendorID = REDHAT_VENDOR_ID;
    properties->deviceID = VIRTIOGPU_DEVICE_ID;
    properties->deviceType = VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU;
 
    strncpy(properties->deviceName, "VirtIO-gpu",
            VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
-   properties->sparseProperties = sparse_props;
 
    RETURN();
 }
@@ -200,6 +208,11 @@ initialize_vk_device(const VkAllocationCallbacks * allocators)
    struct vk_device *device = NULL;
 
    device = vk_calloc(sizeof(device), allocators, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (device == NULL) {
+      return device;
+   }
+
+   device->device_id = vtest_send_create_device(icd_state.io_fd);
 
    return device;
 }
@@ -320,16 +333,3 @@ vgl_vkCreateCommandPool(VkDevice device,
    *pool = TO_HANDLE(&dev->command_pool);
    RETURN(VK_SUCCESS);
 }
-
-/*
-VkResult vkCreateDescriptorSetLayout(VkDevice device,
-                                     const VkDescriptorSetLayoutCreateInfo *info,
-                                     const VkAllocationCallbacks *allocators,
-                                     VkDescriptorSetLayout *layout)
-{
-   TRACE_IN();
-
-
-   RETURN(VK_SUCCESS);
-}
-*/

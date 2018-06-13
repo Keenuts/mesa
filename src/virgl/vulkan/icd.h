@@ -13,9 +13,20 @@
 #define TO_HANDLE(Handle) (void*)(Handle)
 #define FROM_HANDLE(Dst, Src) (__typeof__(Dst))(Src)
 
+#include "common/list.h"
+#include "vk_structs.h"
+
+struct vk_physical_device_list {
+   struct list list;
+   struct vk_physical_device vk_device;
+};
+
 struct icd_state {
    int available;
    int io_fd;
+
+
+   struct vk_physical_device_list physical_devices;
 };
 
 extern struct icd_state icd_state;
@@ -28,5 +39,7 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion);
 
 VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
 vk_icdGetInstanceProcAddr(VkInstance instance, const char *pName);
+
+int initialize_physical_devices(void);
 
 #endif

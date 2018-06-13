@@ -65,6 +65,7 @@ libvulkan_virgl = shared_library(
     link_with: [
         libmesa_util,
         libvtest_virgl,
+        libutils_virgl,
     ],
     dependencies : [ ],
     link_args : [],

@@ -1,4 +1,4 @@
-#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <vulkan/vulkan.h>
@@ -20,7 +20,7 @@
    }
 
 
-int vtest_send_create_device(int sock_fd)
+int vtest_create_device(int sock_fd)
 {
    TRACE_IN();
 
@@ -38,10 +38,10 @@ int vtest_send_create_device(int sock_fd)
 
    CHECK_VTEST_RESULT(result);
 
-   RETURN(result.id);
+   RETURN(result.result);
 }
 
-int vtest_send_get_physical_device_count(int sock_fd, uint32_t *device_count)
+int vtest_get_physical_device_count(int sock_fd, uint32_t *device_count)
 {
    TRACE_IN();
 
@@ -65,20 +65,20 @@ int vtest_send_get_physical_device_count(int sock_fd, uint32_t *device_count)
       RETURN(-1);
    }
 
-   *device_count = result.id;
+   *device_count = result.result;
    RETURN(0);
 }
 
-int vtest_send_get_sparse_properties(int sock_fd,
-                                     int device_id,
-                                     VkPhysicalDeviceSparseProperties *props)
+int vtest_get_sparse_properties(int sock_fd,
+                                int device_id,
+                                VkPhysicalDeviceSparseProperties *props)
 {
-   TRACE_IN();
-
    struct vtest_hdr cmd;
    struct vtest_result result;
    struct vtest_payload_device_get payload;
    int res;
+
+   TRACE_IN();
 
    INITIALIZE_HDR(cmd, VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
@@ -94,6 +94,43 @@ int vtest_send_get_sparse_properties(int sock_fd,
 
    res = virgl_block_read(sock_fd, props, sizeof(*props));
    CHECK_IO_RESULT(res, sizeof(*props));
+
+   RETURN(0);
+}
+
+int vtest_get_queue_family_properties(int sock_fd,
+                                      int device_id,
+                                      uint32_t *family_count,
+                                      VkQueueFamilyProperties **families)
+{
+   int res;
+   struct vtest_hdr cmd;
+   struct vtest_payload_device_get payload;
+   struct vtest_result result;
+
+   TRACE_IN();
+
+   INITIALIZE_HDR(cmd, VCMD_VK_GET_QUEUE_FAMILY_PROPS, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_id = device_id;
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   CHECK_VTEST_RESULT(result);
+
+   uint64_t size = sizeof(**families) * result.result;
+   *family_count = result.result;
+   *families = malloc(size);
+   if (*families == NULL) {
+      RETURN(-1);
+   }
+
+   res = virgl_block_read(sock_fd, *families, size);
+   CHECK_IO_RESULT(res, (int)size);
 
    RETURN(0);
 }

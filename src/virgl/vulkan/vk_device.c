@@ -9,6 +9,54 @@
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
 
+#define CHECK_VTEST_RESULT(Result)                                            \
+   if ((Result) < 0) {                                                        \
+      fprintf(stderr, "%s: vtest command failed (%d)\n", __func__, Result);   \
+      RETURN(-1);                                                             \
+   }
+
+int
+initialize_physical_devices(void)
+{
+   int res;
+   uint32_t device_count;
+
+   TRACE_IN();
+
+   list_init(&icd_state.physical_devices.list);
+
+   res = vtest_get_physical_device_count(icd_state.io_fd, &device_count);
+   CHECK_VTEST_RESULT(res);
+
+   for (uint32_t i = 0; i < device_count; i++) {
+      struct vk_physical_device_list *dev = NULL;
+
+      dev = malloc(sizeof(*dev));
+      if (dev == NULL) {
+         RETURN(-2);
+      }
+
+      list_init(&dev->list);
+      dev->vk_device.identifier = i;
+
+      res = vtest_get_sparse_properties(icd_state.io_fd,
+                                        i,
+                                        &dev->vk_device.sparse_properties);
+      CHECK_VTEST_RESULT(res);
+
+
+      res = vtest_get_queue_family_properties(icd_state.io_fd,
+                                              i,
+                                              &dev->vk_device.queue_family_count,
+                                              &dev->vk_device.queue_family_properties);
+      CHECK_VTEST_RESULT(res);
+
+      list_append(&icd_state.physical_devices.list, &dev->list);
+   }
+
+   RETURN(0);
+}
+
 VkResult
 vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
                      const VkAllocationCallbacks * allocators,
@@ -73,37 +121,19 @@ vgl_vkEnumeratePhysicalDevices(VkInstance instance,
                                uint32_t * device_count,
                                VkPhysicalDevice * physical_devices)
 {
-   int res;
-   static struct vk_physical_device *devices = NULL;
-   static uint32_t count = 0;
+   struct vk_physical_device_list *it = NULL;
 
    TRACE_IN();
    UNUSED_PARAMETER(instance);
 
-   if (count == 0) {
-      res = vtest_send_get_physical_device_count(icd_state.io_fd, &count);
-      if (res < 0) {
-         RETURN(VK_ERROR_DEVICE_LOST);
-      }
-
-      if (devices == NULL) {
-         devices = malloc(sizeof(*devices) * count);
-         if (devices == NULL) {
-            RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
-         }
-
-         for (uint32_t i = 0; i < count; i++) {
-            devices[i].device_identifier = i;
-         }
-      }
+   if (physical_devices == NULL) {
+      *device_count = list_length(&icd_state.physical_devices.list);
+      RETURN(VK_SUCCESS);
    }
 
-   if (physical_devices == NULL) {
-      *device_count = count;
-   } else {
-      for (uint32_t i = 0; i < count; i++) {
-         physical_devices[i] = TO_HANDLE(devices + i);
-      }
+   LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
+      *physical_devices = TO_HANDLE(&it->vk_device);
+      physical_devices++;
    }
 
    RETURN(VK_SUCCESS);
@@ -113,20 +143,11 @@ void
 vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
                                   VkPhysicalDeviceProperties *properties)
 {
-   int res;
    struct vk_physical_device *dev;
 
    TRACE_IN();
 
-   memset(properties, 0, sizeof(*properties));
-
    dev = FROM_HANDLE(dev, device);
-   res = vtest_send_get_sparse_properties(icd_state.io_fd,
-                                          dev->device_identifier,
-                                          &properties->sparseProperties);
-   if (res != 0) {
-      RETURN();
-   }
 
    properties->apiVersion = VK_MAKE_VERSION(1, 0, 0);
    properties->driverVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -136,6 +157,10 @@ vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
 
    strncpy(properties->deviceName, "VirtIO-gpu",
            VK_MAX_PHYSICAL_DEVICE_NAME_SIZE);
+
+   memcpy(&properties->sparseProperties,
+          &dev->sparse_properties,
+          sizeof(dev->sparse_properties));
 
    RETURN();
 }
@@ -165,22 +190,24 @@ struct VkQueueFamilyProperties virgl_queue_families[] = {
 
 void
 vgl_vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device,
-                                             uint32_t * queue_count,
-                                             VkQueueFamilyProperties *
-                                             queues_properties)
+                                             uint32_t *queue_count,
+                                             VkQueueFamilyProperties *queues_properties)
 {
+   struct vk_physical_device *dev;
+
    TRACE_IN();
 
-   UNUSED_PARAMETER(device);
-
-   *queue_count = 1;
+   dev = FROM_HANDLE(dev, device);
 
    if (queues_properties == NULL) {
+      *queue_count = dev->queue_family_count;
       RETURN();
    }
 
-   memcpy(queues_properties, virgl_queue_families,
-          sizeof(virgl_queue_families));
+   memcpy(queues_properties,
+          dev->queue_family_properties,
+          sizeof(*queues_properties) * *queue_count);
+
    RETURN();
 }
 
@@ -212,7 +239,8 @@ initialize_vk_device(const VkAllocationCallbacks * allocators)
       return device;
    }
 
-   device->device_id = vtest_send_create_device(icd_state.io_fd);
+   abort();
+   device->device_id = vtest_create_device(icd_state.io_fd);
 
    return device;
 }

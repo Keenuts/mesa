@@ -15,7 +15,7 @@ struct vtest_hdr {
 
 struct vtest_result {
     uint32_t error_code;
-    uint32_t id;
+    uint32_t result;
 };
 
 #define INITIALIZE_HDR(Cmd, Id, Size)                          \
@@ -29,10 +29,14 @@ int virgl_block_read(int fd, void *buf, int size);
 
 int virgl_vtest_connect(void);
 
-int vtest_send_create_device(int sock_fd);
-int vtest_send_get_physical_device_count(int sock_fd, uint32_t *device_count);
-int vtest_send_get_sparse_properties(int sock_fd,
+int vtest_create_device(int sock_fd);
+int vtest_get_physical_device_count(int sock_fd, uint32_t *device_count);
+int vtest_get_sparse_properties(int sock_fd,
                                      int device_id,
                                      VkPhysicalDeviceSparseProperties *props);
+int vtest_get_queue_family_properties(int sock_fd,
+                                      int device_id,
+                                      uint32_t *family_count,
+                                      VkQueueFamilyProperties **families);
 
 #endif

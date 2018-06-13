@@ -22,7 +22,11 @@ struct vk_physical_device
 {
    VK_LOADER_DATA loader_data;
 
-   uint32_t device_identifier;
+   uint32_t identifier;
+   VkPhysicalDeviceSparseProperties sparse_properties;
+
+   uint32_t queue_family_count;
+   VkQueueFamilyProperties *queue_family_properties;
 };
 
 struct vk_queue {

@@ -57,6 +57,8 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
 
       icd_state.available = 1;
       icd_state.io_fd = sock_fd;
+
+      initialize_physical_devices();
       RETURN(VK_SUCCESS);
    } while (0);
 

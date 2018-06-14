@@ -177,17 +177,6 @@ vgl_vkGetPhysicalDeviceFeatures(VkPhysicalDevice device,
    RETURN();
 }
 
-
-struct VkQueueFamilyProperties virgl_queue_families[] = {
-   {
-    .queueFlags = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT |
-    VK_QUEUE_TRANSFER_BIT,
-    .queueCount = 1,
-    .timestampValidBits = 0,    /* 0 means no support. 36 to 64 are valid values */
-    .minImageTransferGranularity = {1, 1, 1},
-    },
-};
-
 void
 vgl_vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device,
                                              uint32_t *queue_count,

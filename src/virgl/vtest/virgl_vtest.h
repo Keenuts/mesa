@@ -2,6 +2,7 @@
 #define VIRGL_VTEST_H
 
 #include <vulkan/vulkan.h>
+#include "vulkan/vk_structs.h"
 
 struct vtest_hdr {
     union {
@@ -29,7 +30,6 @@ int virgl_block_read(int fd, void *buf, int size);
 
 int virgl_vtest_connect(void);
 
-int vtest_create_device(int sock_fd);
 int vtest_get_physical_device_count(int sock_fd, uint32_t *device_count);
 int vtest_get_sparse_properties(int sock_fd,
                                      int device_id,
@@ -38,5 +38,14 @@ int vtest_get_queue_family_properties(int sock_fd,
                                       int device_id,
                                       uint32_t *family_count,
                                       VkQueueFamilyProperties **families);
+
+int vtest_create_device(int sock_fd,
+                        uint32_t physical_device_id,
+                        const VkDeviceCreateInfo *info,
+                        uint32_t *id);
+int vtest_get_device_queues(int sock_fd,
+                            uint32_t device_id,
+                            uint32_t *queue_count,
+                            struct vk_queue **queues);
 
 #endif

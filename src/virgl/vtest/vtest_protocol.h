@@ -20,6 +20,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#include <vulkan/vulkan.h>
+
 #ifndef VTEST_PROTOCOL
 #define VTEST_PROTOCOL
 
@@ -51,10 +54,11 @@
 /* 0 length cmd */
 /* resp VCMD_GET_CAPS + caps */
 
-#define VCMD_VK_CREATE_DEVICE 9
-#define VCMD_VK_ENUMERATE_PHYSICAL_DEVICES 10
-#define VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES 11
-#define VCMD_VK_GET_QUEUE_FAMILY_PROPS 12
+#define VCMD_VK_ENUMERATE_PHYSICAL_DEVICES 9
+#define VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES 10
+#define VCMD_VK_GET_QUEUE_FAMILY_PROPS 11
+#define VCMD_VK_CREATE_DEVICE 12
+#define VCMD_VK_GET_DEVICE_QUEUES 13
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -92,6 +96,27 @@
 
 struct vtest_payload_device_get {
    uint32_t device_id;
+};
+
+struct vtest_payload_queue_create {
+   VkDeviceQueueCreateFlags flags;
+   uint32_t queue_family_index;
+   uint32_t queue_count;
+   float priorities[];
+};
+
+struct vtest_payload_device_create {
+   uint32_t physical_device_id;
+   VkDeviceCreateFlags flags;
+   VkPhysicalDeviceFeatures features;
+
+   uint32_t queue_info_count;
+};
+
+struct vtest_payload_queue_get {
+   uint32_t identifier;
+   uint32_t queue_index;
+   uint32_t family_index;
 };
 
 #endif

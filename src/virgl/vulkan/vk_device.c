@@ -212,97 +212,113 @@ vgl_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice device,
    UNUSED_PARAMETER(properties_count);
    UNUSED_PARAMETER(properties);
 
-   /* we do not have any extensions, so none */
+   /* we do not display any extensions for now */
    *properties_count = 0;
 
    RETURN(VK_SUCCESS);
 }
 
-static struct vk_device *
-initialize_vk_device(const VkAllocationCallbacks * allocators)
+static int
+initialize_vk_device(uint32_t physical_device_id,
+                     const VkDeviceCreateInfo *info,
+                     struct vk_device *dev)
 {
-   struct vk_device *device = NULL;
+   TRACE_IN();
 
-   device = vk_calloc(sizeof(device), allocators, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
-   if (device == NULL) {
-      return device;
+   int res;
+   uint32_t device_id;
+
+   res = vtest_create_device(icd_state.io_fd, physical_device_id, info, &device_id);
+   if (res < 0) {
+      RETURN(VK_ERROR_INITIALIZATION_FAILED);
    }
 
-   abort();
-   device->device_id = vtest_create_device(icd_state.io_fd);
+   dev->identifier = device_id;
+   dev->device_lost = 0;
 
-   return device;
+   res = vtest_get_device_queues(icd_state.io_fd,
+                                 device_id,
+                                 &dev->queue_count,
+                                 &dev->queues);
+   if (res < 0) {
+      dev->device_lost = 1;
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   RETURN(VK_SUCCESS);
 }
 
 VkResult
 vgl_vkCreateDevice(VkPhysicalDevice phys_device,
-                   const VkDeviceCreateInfo * info,
-                   const VkAllocationCallbacks * allocators,
-                   VkDevice * device)
+                   const VkDeviceCreateInfo *info,
+                   const VkAllocationCallbacks *allocators,
+                   VkDevice *device)
 {
    TRACE_IN();
-   const VkDeviceQueueCreateInfo *queue_info = NULL;
-   const VkPhysicalDeviceFeatures *feature_info = NULL;
 
-   if (info->queueCreateInfoCount > 1) {
-      RETURN(VK_ERROR_TOO_MANY_OBJECTS);
-   }
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_physical_device *p_device = NULL;
+
+   //FIXME: use allocators
+   UNUSED_PARAMETER(allocators);
 
    if (info->enabledLayerCount != 0) {
+      fprintf(stderr, "layer support is not implemented\n");
       RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
    }
 
    if (info->enabledExtensionCount != 0) {
+      fprintf(stderr, "extensions support is not implemented\n");
       RETURN(VK_ERROR_EXTENSION_NOT_PRESENT);
    }
 
-   queue_info = info->pQueueCreateInfos;
-   feature_info = info->pEnabledFeatures;
-
-   if (queue_info->sType != VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO) {
-      RETURN(VK_ERROR_INITIALIZATION_FAILED);
-   }
-
-   if (queue_info->queueFamilyIndex != 0 || queue_info->queueCount > 1) {
-      RETURN(VK_ERROR_INITIALIZATION_FAILED);
-   }
-
-   UNUSED_PARAMETER(phys_device);
-   UNUSED_PARAMETER(allocators);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(feature_info);
-
-   *device = TO_HANDLE(initialize_vk_device(allocators));
-
-   if (*device == NULL) {
+   vk_device = malloc(sizeof(*vk_device));
+   if (vk_device == NULL) {
       RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
    }
 
+   p_device = FROM_HANDLE(p_device, phys_device);
+   res = initialize_vk_device(p_device->identifier, info, vk_device);
+   if (res < 0) {
+      RETURN(res);
+   }
+
+   *device = TO_HANDLE(vk_device);
    RETURN(VK_SUCCESS);
 }
 
 void
 vgl_vkGetDeviceQueue(VkDevice device,
                      uint32_t queue_family_index,
-                     uint32_t queue_index, VkQueue * queue)
+                     uint32_t queue_index,
+                     VkQueue *queue)
 {
    TRACE_IN();
    UNUSED_PARAMETER(device);
 
+   struct vk_device *dev = NULL;
+   struct vk_queue *it = NULL;
+   uint32_t queue_count;
+
+   dev = FROM_HANDLE(dev, device);
+
    *queue = VK_NULL_HANDLE;
+   queue_count = dev->queue_count;
 
-   if (queue_family_index != 0) {
-      RETURN();
+   for (uint32_t i = 0; i < queue_count; i++) {
+      it = dev->queues + i;
+      if (it->family_index != queue_family_index) {
+         continue;
+      }
+
+      if (it->queue_index != queue_index) {
+         continue;
+      }
+
+      queue = TO_HANDLE(it);
+      break;
    }
-
-   if (queue_index != 0) {
-      RETURN();
-   }
-
-   /* Just set some value if the app wants to check for NULL_HANDLE
-    * but we do not use it for now */
-   struct vk_device *dev = FROM_HANDLE(dev, device);
-   *queue = TO_HANDLE(&dev->queue);
 
    RETURN();
 }

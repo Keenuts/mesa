@@ -226,7 +226,7 @@ initialize_vk_device(uint32_t physical_device_id,
    TRACE_IN();
 
    int res;
-   uint32_t device_id;
+   uint32_t device_id, queue_count, id;
 
    res = vtest_create_device(icd_state.io_fd, physical_device_id, info, &device_id);
    if (res < 0) {
@@ -236,14 +236,26 @@ initialize_vk_device(uint32_t physical_device_id,
    dev->identifier = device_id;
    dev->device_lost = 0;
 
-   res = vtest_get_device_queues(icd_state.io_fd,
-                                 device_id,
-                                 &dev->queue_count,
-                                 &dev->queues);
-   if (res < 0) {
-      dev->device_lost = 1;
-      RETURN(VK_ERROR_DEVICE_LOST);
+   queue_count = 0;
+   for (uint32_t i = 0; i < info->queueCreateInfoCount; i++) {
+      queue_count += info->pQueueCreateInfos[i].queueCount;
    }
+
+   dev->queues = calloc(queue_count, sizeof(*dev->queues));
+   if (dev->queues == NULL) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   id = 0;
+   for (uint32_t i = 0; i < info->queueCreateInfoCount; i++) {
+      for (uint32_t j = 0; j < info->pQueueCreateInfos[i].queueCount; j++) {
+         dev->queues[id].identifier = id;
+         dev->queues[id].family_index = i;
+         dev->queues[id].queue_index = j;
+         id++;
+      }
+   }
+   dev->queue_count = queue_count;
 
    RETURN(VK_SUCCESS);
 }
@@ -298,25 +310,22 @@ vgl_vkGetDeviceQueue(VkDevice device,
    UNUSED_PARAMETER(device);
 
    struct vk_device *dev = NULL;
-   struct vk_queue *it = NULL;
    uint32_t queue_count;
 
+   *queue = VK_NULL_HANDLE;
    dev = FROM_HANDLE(dev, device);
 
-   *queue = VK_NULL_HANDLE;
    queue_count = dev->queue_count;
-
    for (uint32_t i = 0; i < queue_count; i++) {
-      it = dev->queues + i;
-      if (it->family_index != queue_family_index) {
+      if (dev->queues[i].family_index != queue_family_index) {
          continue;
       }
 
-      if (it->queue_index != queue_index) {
+      if (dev->queues[i].queue_index != queue_index) {
          continue;
       }
 
-      queue = TO_HANDLE(it);
+      *queue = TO_HANDLE(dev->queues + i);
       break;
    }
 

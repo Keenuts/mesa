@@ -115,6 +115,24 @@ int vtest_get_queue_family_properties(int sock_fd,
    RETURN(0);
 }
 
+static int fill_queue_create_payload(struct vtest_payload_queue_create **payload,
+                                     const VkDeviceQueueCreateInfo *info)
+{
+   const uint32_t array_size = sizeof(float) * info->queueCount;
+
+   *payload = malloc(sizeof(**payload) + array_size);
+   if (*payload == NULL) {
+      return 1;
+   }
+
+   (*payload)->flags = info->flags;
+   (*payload)->queue_family_index = info->queueFamilyIndex;
+   (*payload)->queue_count = info->queueCount;
+
+   memcpy(&(*payload)->priorities, info->pQueuePriorities, array_size);
+   return 0;
+}
+
 int vtest_create_device(int sock_fd,
                         uint32_t physical_device_id,
                         const VkDeviceCreateInfo *info,
@@ -125,90 +143,53 @@ int vtest_create_device(int sock_fd,
 
    struct vtest_hdr cmd;
    struct vtest_payload_device_create payload;
+   struct vtest_payload_queue_create *queue_info = NULL;
    struct vtest_result result;
+   int payload_size;
    int res;
 
    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DEVICE, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
 
+   /* vtest_create_device payload is in two parts:
+    *    - fixed size VkDeviceCreateInfo
+    *    - variable size payload containing all VkDeviceQueueCreateInfos
+    */
+   memset(&payload, 0, sizeof(payload));
    payload.physical_device_id = physical_device_id;
    payload.flags = info->flags;
    payload.queue_info_count = info->queueCreateInfoCount;
-   memcpy(&payload.features, info->pEnabledFeatures, sizeof(payload.features));
 
+   /* pEnabledFeatures CAN be NULL */
+   if (info->pEnabledFeatures) {
+      memcpy(&payload.features, info->pEnabledFeatures, sizeof(payload.features));
+   }
 
-   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
-   CHECK_IO_RESULT(res, sizeof(cmd));
    res = virgl_block_write(sock_fd, &payload, sizeof(payload));
    CHECK_IO_RESULT(res, sizeof(payload));
 
-   for (uint32_t i = 0; i < payload.queue_info_count; i++) {
-      struct vtest_payload_queue_create *queue_info = NULL;
-      uint32_t queue_count = info->pQueueCreateInfos->queueCount;
+   /* For each VkDeviceQueueCreateInfo, we need to fill a queue payload */
 
-      queue_info = malloc(sizeof(queue_info) + sizeof(float) * queue_count);
-      if (queue_info == NULL) {
-         RETURN(-1);
+   for (uint32_t i = 0; i < payload.queue_info_count; i++) {
+      res = fill_queue_create_payload(&queue_info, info->pQueueCreateInfos + i);
+      if (res < 0) {
+         break;
       }
 
-      queue_info->flags = info->pQueueCreateInfos[i].flags;
-      queue_info->queue_family_index = info->pQueueCreateInfos[i].queueFamilyIndex;
-      queue_info->queue_count = info->pQueueCreateInfos[i].queueCount;
+      payload_size = sizeof(*queue_info) + sizeof(float) * queue_info->queue_count;
+      res = virgl_block_write(sock_fd, queue_info, payload_size);
+      CHECK_IO_RESULT(res, payload_size);
 
-      memcpy(&queue_info->priorities,
-             info->pQueueCreateInfos[i].pQueuePriorities,
-             sizeof(float) * queue_count);
+      free(queue_info);
+      queue_info = NULL;
    }
 
-
+   /* reading the device ID allocated by virgl (or the error code) */
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    CHECK_VTEST_RESULT(result);
 
    *id = result.result;
-
    RETURN(result.result);
-}
-
-int vtest_get_device_queues(int sock_fd,
-                            uint32_t device_id,
-                            uint32_t *queue_count,
-                            struct vk_queue **queues)
-{
-   TRACE_IN();
-
-   struct vtest_hdr cmd;
-   struct vtest_payload_device_get payload;
-   struct vtest_result result;
-   struct vtest_payload_queue_get queue_result;
-   int res;
-
-   INITIALIZE_HDR(cmd, VCMD_VK_GET_DEVICE_QUEUES, sizeof(cmd));
-   payload.device_id = device_id;
-
-   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
-   CHECK_IO_RESULT(res, sizeof(cmd));
-   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
-   CHECK_IO_RESULT(res, sizeof(payload));
-
-
-   res = virgl_block_read(sock_fd, &result, sizeof(result));
-   CHECK_IO_RESULT(res, sizeof(result));
-   CHECK_VTEST_RESULT(result);
-
-   *queue_count = result.result;
-   *queues = malloc(sizeof(struct vk_queue) * result.result);
-   if (*queues == NULL) {
-      RETURN(-1);
-   }
-
-   for (uint32_t i = 0; i < result.result; i++) {
-      res = virgl_block_read(sock_fd, &queue_result, sizeof(queue_result));
-      CHECK_IO_RESULT(res, sizeof(queue_result));
-
-      (*queues)[i].identifier = queue_result.identifier;
-      (*queues)[i].queue_index = queue_result.queue_index;
-      (*queues)[i].family_index = queue_result.family_index;
-   }
-
-   RETURN(0);
 }

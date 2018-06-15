@@ -58,7 +58,6 @@
 #define VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES 10
 #define VCMD_VK_GET_QUEUE_FAMILY_PROPS 11
 #define VCMD_VK_CREATE_DEVICE 12
-#define VCMD_VK_GET_DEVICE_QUEUES 13
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -111,12 +110,6 @@ struct vtest_payload_device_create {
    VkPhysicalDeviceFeatures features;
 
    uint32_t queue_info_count;
-};
-
-struct vtest_payload_queue_get {
-   uint32_t identifier;
-   uint32_t queue_index;
-   uint32_t family_index;
 };
 
 #endif

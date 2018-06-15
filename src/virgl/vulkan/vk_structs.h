@@ -31,8 +31,8 @@ struct vk_physical_device
 
 struct vk_queue {
    VK_LOADER_DATA loader_data;
-   uint32_t identifier;
 
+   uint32_t identifier;
    uint32_t queue_index;
    uint32_t family_index;
 };

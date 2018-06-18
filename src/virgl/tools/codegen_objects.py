@@ -1,6 +1,6 @@
 import argparse
 import xml.etree.cElementTree as et
-import code_generator as code_gen
+import codegen_utils as code_gen
 import json
 import os
 import sys
@@ -40,18 +40,67 @@ def generate_struct(info):
 
     return code + "};\n"
 
+def generate_payload_field_size_exp(parent_input, parent_payload, field):
+    for p in fields
+    size = 'sizeof(*{0}->{1}) * {2}->{3}'.format(parent_payload,
+                                                 field['name'],
+                                                 parent_input,
+                                                 field['size'])
+    if not 'content' in p:
+        return [ size ]
+
+    for p in field['content']:
+        if not 'size' in p:
+            continue
+
+        p_input = '{0}->{1}'.format(parent_input, field['name'])
+    size += 
+    return sizeof
+
+def generate_payload_size_expr(v_input, v_payload, fields):
+    expr = []
+    for f in fields:
+        if 'size' not in f:
+            continue
+
+        size = 'sizeof(*{0}->{2}) * {1}->{3}'.format(
+                    v_payload, v_input, f['name'], f['size'])
+        expr.append(size)
+        
+        if not 'content' in f:
+            continue
+
+        sub_size = generate_payload_size_expr(
+            '{0}->{1}'.format(v_input, f['name'])
+
+    return expr
+    
+def generate_payload_allocation(indent, info):
+    code = '{0}struct payload_{1} *payload = NULL;\n'.format(indent, info['function'])
+
+    size_component = [ 'sizeof(*payload)' ]
+    size_component += generate_payload_size_expr('pCreateInfo', 'payload', info['infos'])
+
+    size_expr = ' +\n{0}{0}'.format(indent).join(size_component)
+    code = '{0}const uint64_t payload_size = \n{0}{0}{1};\n'.format(indent, size_expr)
+
+
+    code += '{0}payload = alloca(payload_size);\n'.format(indent)
+    return code
+
 def generate_function(info, prototype):
     header = ""
     function = ""
-
     decl = prototype.to_code()
 
-    function += decl + "\n"
+    # Header generation
     header += decl + ";\n\n"
     header += generate_struct(info)
 
-    function += OPEN_SCOPE
+    # function generation
+    function += decl + "\n" + OPEN_SCOPE
 
+    function += generate_payload_allocation(" " * INDENT_SIZE, info)
     
     function += CLOSE_SCOPE
 

@@ -285,7 +285,8 @@ vgl_vkCreateDevice(VkPhysicalDevice phys_device,
       RETURN(VK_ERROR_EXTENSION_NOT_PRESENT);
    }
 
-   vk_device = malloc(sizeof(*vk_device));
+   vk_device = vk_malloc(sizeof(*vk_device), allocators,
+                         VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
    if (vk_device == NULL) {
       RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
    }

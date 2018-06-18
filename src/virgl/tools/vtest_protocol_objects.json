@@ -2,18 +2,17 @@
    {
       "function": "vkCreateDescriptorSetLayout",
       "output": "VkDescriptorSetLayout",
+      "id": "VCMD_VK_CREATE_DESCRIPTOR_LAYOUT",
 
-      "chunks": [
-         {
-            "name": "intro",
+      "chunks": {
+         "intro": {
             "parent": null,
             "content" : [
                { "name": "flags" },
                { "name" : "bindingCount" }
             ]
          },
-         {
-            "name": "pBindings",
+         "pBindings": {
             "parent": "intro",
             "count": "bindingCount",
             "content" : [
@@ -22,7 +21,14 @@
                { "name": "descriptorCount" },
                { "name": "stageFlags" }
             ]
+         },
+         "X": {
+            "parent": "pBindings",
+            "count": "binding",
+            "content": [
+               { "name": "toto" }
+            ]
          }
-      ]
+      }
    }
 ]

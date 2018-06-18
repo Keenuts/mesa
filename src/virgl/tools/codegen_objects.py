@@ -1,129 +1,224 @@
 import argparse
+import re
 import xml.etree.cElementTree as et
 import codegen_utils as code_gen
 import json
 import os
 import sys
 
-CREATION_JSON = "./obj_creation.json"
-HEADER_TEMPLATE_PATH = "./templates/vgl_objects_template.h"
-CODE_TEMPLATE_PATH = "./templates/vgk_objects_template.c"
+CREATION_JSON = "./vtest_protocol_objects.json"
 
 INDENT_SIZE = 3
-OPEN_SCOPE = "{\n"
-CLOSE_SCOPE = "}\n"
+INDENT = INDENT_SIZE * " "
+EOL = "\n"
+OPEN_SCOPE = "{" + EOL
+CLOSE_SCOPE = "}" + EOL
+DEFAULT_TYPENAME = 'uint32_t'
 
-def generate_struct_field(indent, field):
-    # simple field (uint32_t)
-    if 'size' not in field:
-        return format("%suint32_t %s;\n" % (indent, field['name']))
+def camel_to_snake(name):
+    return ''.join([ ("_" + c.lower() if c.isupper() else c) for c in name ])
 
-    # simple built-in array
-    if 'content' not in field:
-        return format("%suint32_t %s[];\n" % (indent, field['name']))
+def generate_prototype(spec):
+    old_name = spec.name
+    spec.name = "vtest_" + spec.name
+    output = spec.to_code()
+    output += ";"
 
-    out = format("%sstruct {\n" % indent)
-    for p in field['content']:
-        out += generate_struct_field(indent + " " * INDENT_SIZE, p)
+    spec.name = old_name
+    return output
 
-    out += format("%s} %s[];\n" % (indent, field['name']))
-    return out
-
-def generate_struct(info):
-    code = ""
-
-    code += format("struct payload_%s {\n" % info['function'])
+def generate_structs(protocol):
     indent = " " * INDENT_SIZE;
+    structs = []
 
-    for p in info['infos']:
-        code += generate_struct_field(indent, p)
+    for name in protocol['chunks']:
+        chunk = protocol['chunks'][name]
+        code = 'struct payload_{0}_{1} '.format(protocol['function'], name)
+        code += OPEN_SCOPE
 
-    return code + "};\n"
+        for field in chunk['content']:
+            typename = DEFAULT_TYPENAME
+            if 'type' in field:
+                typename = field['type']
+            code += '{0}{1} {2}{3}'.format(indent, typename, field['name'], EOL)
+            
+        code += CLOSE_SCOPE
 
-def generate_payload_field_size_exp(parent_input, parent_payload, field):
-    for p in fields
-    size = 'sizeof(*{0}->{1}) * {2}->{3}'.format(parent_payload,
-                                                 field['name'],
-                                                 parent_input,
-                                                 field['size'])
-    if not 'content' in p:
-        return [ size ]
+        structs.append(code)
 
-    for p in field['content']:
-        if not 'size' in p:
-            continue
+    return structs;
 
-        p_input = '{0}->{1}'.format(parent_input, field['name'])
-    size += 
-    return sizeof
+def generate_code_init(protocol):
+    indent = " " * INDENT_SIZE
+    code = []
 
-def generate_payload_size_expr(v_input, v_payload, fields):
-    expr = []
-    for f in fields:
-        if 'size' not in f:
-            continue
+    code.append("int res;")
+    code.append("struct vtest_hdr cmd;")
 
-        size = 'sizeof(*{0}->{2}) * {1}->{3}'.format(
-                    v_payload, v_input, f['name'], f['size'])
-        expr.append(size)
-        
-        if not 'content' in f:
-            continue
+    for name in protocol['chunks']:
+        c = protocol['chunks'][name]
+        code.append('{0} {1};'.format(c['typename'], name))
 
-        sub_size = generate_payload_size_expr(
-            '{0}->{1}'.format(v_input, f['name'])
-
-    return expr
-    
-def generate_payload_allocation(indent, info):
-    code = '{0}struct payload_{1} *payload = NULL;\n'.format(indent, info['function'])
-
-    size_component = [ 'sizeof(*payload)' ]
-    size_component += generate_payload_size_expr('pCreateInfo', 'payload', info['infos'])
-
-    size_expr = ' +\n{0}{0}'.format(indent).join(size_component)
-    code = '{0}const uint64_t payload_size = \n{0}{0}{1};\n'.format(indent, size_expr)
-
-
-    code += '{0}payload = alloca(payload_size);\n'.format(indent)
+    code = [ indent + c for c in code]
     return code
 
-def generate_function(info, prototype):
-    header = ""
-    function = ""
-    decl = prototype.to_code()
+def generate_code_send_header(id):
+    indent = " " * INDENT_SIZE * 1
+    code = [ "" ]
 
-    # Header generation
-    header += decl + ";\n\n"
-    header += generate_struct(info)
+    code.append('INITIALIZE_HDR(cmd, {0}, sizeof(cmd));'.format(id))
+    code.append('res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));')
+    code.append('CHECK_IO_RESULT(res, sizeof(cmd));')
 
-    # function generation
-    function += decl + "\n" + OPEN_SCOPE
+    code = [ indent + c for c in code]
+    return code
 
-    function += generate_payload_allocation(" " * INDENT_SIZE, info)
+def generate_code_simple_chunk(chunk):
+    code = []
+
+    for field in chunk['content']:
+        code.append('{0}.{1} = create_info->{1};'.format(chunk['name'], field['name']))
+
+    code.append('res = virgl_block_write(sock_fd, &{0}, sizeof({0}));'
+                .format(chunk['name']))
+    code.append('CHECK_IO_RESULT(res, sizeof({0}));'.format(chunk['name']))
+
+    return code
+
+def get_chunk_dependencies(protocol, chunk):
+    deps = [ ]
+
+    parent_node = chunk
+    while parent_node['parent'] != None:
+        node = protocol['chunks'][parent_node['parent']]
+        deps.insert(0, (node, parent_node))
+        parent_node = node
+
+    return deps
+
+def generate_code_nested_chunk(indent_level, protocol, chunk):
+    indent = " " * INDENT_SIZE * indent_level
+    code = [ "" ]
+
+    parent = protocol['chunks'][chunk['parent']]
+    dependencies = get_chunk_dependencies(protocol, chunk)
+
+    loop_indent = indent
+    iterator = chr(ord('i') + indent_level)
+    size_var = '{}.{}'.format(chunk['parent'], chunk['count'])
+    size_var = 'create_info->'
+    to_close = 0
+
+    # opening scopes
+    for deps in dependencies:
+        index_var = size_var + '{}'.format(deps[1]['count'])
+        code.append('{0}for (uint32_t {1} = 0; {1} < {2}; {1}++) {{'
+                    .format(loop_indent, iterator, index_var))
+        loop_indent += INDENT
+
+        size_var += '{}[{}].'.format(deps[1]['name'], iterator)
+        iterator = chr(ord(iterator) + 1)
     
-    function += CLOSE_SCOPE
+    # assignations
 
-    return (0, function, header)
+    for field in chunk['content']:
+        code.append('{0}{1}.{2} = {3}{2};'
+                    .format(loop_indent, chunk['name'], field['name'], size_var))
+
+    code.append('{0}res = virgl_block_write(sock_fd, &{1}, sizeof({1}));'
+                .format(loop_indent, chunk['name']))
+    code.append('{}CHECK_IO_RESULT(res, sizeof({}));'
+                .format(loop_indent, chunk['name']))
+
+
+    # Closing scopes
+    while len(loop_indent) > len(indent):
+        loop_indent = loop_indent[:-INDENT_SIZE]
+        code += [ loop_indent + "}" ]
+
+    code = [ indent + c for c in code]
+    return code
+
+def generate_code_send_chunks(protocol):
+    indent = " " * INDENT_SIZE
+    code = [ "" ]
+
+    for name in protocol['chunks']:
+        chunk = protocol['chunks'][name]
+
+        if chunk['parent'] == None:
+            code += generate_code_simple_chunk(chunk)
+        else:
+            code += generate_code_nested_chunk(0, protocol, chunk)
+
+
+    code = [ indent + c for c in code]
+    return code
+
+def generate_code_read_result():
+    indent = " " * INDENT_SIZE
+    code = [ "" ]
+
+    code.append('res = virgl_block_read(sock_fd, &result, sizeof(result));')
+    code.append('CHECK_IO_RESULT(res, sizeof(res));')
+    code.append('*output = result.result')
+    code.append('RETURN(result.error_code)')
+
+    code = [ indent + c for c in code]
+    return code
+    
+
+def generate_function(spec, protocol):
+    code = []
+
+    code.append(generate_prototype(spec).replace(";", ""))
+    code.append(OPEN_SCOPE)
+
+    code += generate_code_init(protocol)
+    code += generate_code_send_header(protocol['id'])
+    code += generate_code_send_chunks(protocol)
+    code += generate_code_read_result()
+
+    code.append(CLOSE_SCOPE)
+    return EOL.join(code)
+
+def cook_entry(protocol):
+
+    for name in protocol['chunks']:
+        entry = protocol['chunks'][name]
+
+        entry['name'] = name
+
+        s_name = 'payload_{0}_{1}'.format(protocol['function'], name)
+        entry['typename'] = 'struct ' + s_name
+
 
 def generate_code(to_generate, vk_functions):
-    body = ""
-    header = ""
+    prototype_declarations = []
+    struct_declarations = []
+    function_implems = []
 
-    for f in to_generate:
-        if f['function'] not in vk_functions:
-            print("unknown vk function %s" % f['function'])
+    for entry in to_generate:
+        if entry['function'] not in vk_functions:
+            print("unknown vk function %s" % entry['function'])
             return (-1, None, None)
 
-        prototype = vk_functions[f['function']]
+        # Camel to snake case
+        spec = vk_functions[entry['function']]
+        spec.name = camel_to_snake(spec.name).replace("vk_", "")
+        entry['function'] = camel_to_snake(entry['function']).replace("vk_", "")
+        
+        cook_entry(entry)
 
-        err, b, h = generate_function(f, prototype)
-        if err != 0:
-            return (err, None, None);
+        prototype_declarations.append(generate_prototype(spec))
+        struct_declarations += generate_structs(entry);
+        function_implems.append(generate_function(spec, entry))
 
-        body += b
-        header += h
+    header = EOL.join(prototype_declarations)
+    header += EOL + EOL
+    header += EOL.join(struct_declarations)
 
+    body = (EOL * 2).join(function_implems)
     return (0, body, header)
 
 def main():

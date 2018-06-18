@@ -9,12 +9,6 @@
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
 
-#define CHECK_VTEST_RESULT(Result)                                            \
-   if ((Result) < 0) {                                                        \
-      fprintf(stderr, "%s: vtest command failed (%d)\n", __func__, Result);   \
-      RETURN(-1);                                                             \
-   }
-
 int
 initialize_physical_devices(void)
 {
@@ -26,7 +20,9 @@ initialize_physical_devices(void)
    list_init(&icd_state.physical_devices.list);
 
    res = vtest_get_physical_device_count(icd_state.io_fd, &device_count);
-   CHECK_VTEST_RESULT(res);
+   if (res < 0) {
+      RETURN(-1);
+   }
 
    for (uint32_t i = 0; i < device_count; i++) {
       struct vk_physical_device_list *dev = NULL;
@@ -42,14 +38,19 @@ initialize_physical_devices(void)
       res = vtest_get_sparse_properties(icd_state.io_fd,
                                         i,
                                         &dev->vk_device.sparse_properties);
-      CHECK_VTEST_RESULT(res);
-
+      if (res < 0) {
+         free(dev);
+         RETURN(-1);
+      }
 
       res = vtest_get_queue_family_properties(icd_state.io_fd,
                                               i,
                                               &dev->vk_device.queue_family_count,
                                               &dev->vk_device.queue_family_properties);
-      CHECK_VTEST_RESULT(res);
+      if (res < 0) {
+         free(dev);
+         RETURN(-1);
+      }
 
       list_append(&icd_state.physical_devices.list, &dev->list);
    }

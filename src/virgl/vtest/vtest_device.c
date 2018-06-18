@@ -7,20 +7,6 @@
 #include "virgl_vtest.h"
 #include "vtest_protocol.h"
 
-#define CHECK_IO_RESULT(Done, Expected)                              \
-   if ((Done) != (Expected)) {                                       \
-      fprintf(stderr, "vtest IO failed. expected 0x%zx got 0x%zx\n", \
-              (uint64_t)(Expected), (uint64_t)(Done));               \
-      RETURN(-1);                                                    \
-   }
-
-#define CHECK_VTEST_RESULT(Result)                                            \
-   if (Result.error_code != 0) {                                              \
-      fprintf(stderr, "vtest returned an error: %d\n", result.error_code);    \
-      RETURN(-2);                                                             \
-   }
-
-
 int vtest_get_physical_device_count(int sock_fd, uint32_t *device_count)
 {
    TRACE_IN();
@@ -115,21 +101,16 @@ int vtest_get_queue_family_properties(int sock_fd,
    RETURN(0);
 }
 
-static int fill_queue_create_payload(struct vtest_payload_queue_create **payload,
+static int fill_queue_create_payload(struct vtest_payload_queue_create *payload,
                                      const VkDeviceQueueCreateInfo *info)
 {
    const uint32_t array_size = sizeof(float) * info->queueCount;
 
-   *payload = malloc(sizeof(**payload) + array_size);
-   if (*payload == NULL) {
-      return 1;
-   }
+   payload->flags = info->flags;
+   payload->queue_family_index = info->queueFamilyIndex;
+   payload->queue_count = info->queueCount;
 
-   (*payload)->flags = info->flags;
-   (*payload)->queue_family_index = info->queueFamilyIndex;
-   (*payload)->queue_count = info->queueCount;
-
-   memcpy(&(*payload)->priorities, info->pQueuePriorities, array_size);
+   memcpy(payload + 1, info->pQueuePriorities, array_size);
    return 0;
 }
 
@@ -138,9 +119,6 @@ int vtest_create_device(int sock_fd,
                         const VkDeviceCreateInfo *info,
                         uint32_t *id)
 {
-   UNUSED_PARAMETER(id);
-   UNUSED_PARAMETER(info);
-
    struct vtest_hdr cmd;
    struct vtest_payload_device_create payload;
    struct vtest_payload_queue_create *queue_info = NULL;
@@ -172,7 +150,8 @@ int vtest_create_device(int sock_fd,
    /* For each VkDeviceQueueCreateInfo, we need to fill a queue payload */
 
    for (uint32_t i = 0; i < payload.queue_info_count; i++) {
-      res = fill_queue_create_payload(&queue_info, info->pQueueCreateInfos + i);
+      queue_info = alloca(sizeof(float) * info->pQueueCreateInfos[i].queueCount);
+      res = fill_queue_create_payload(queue_info, info->pQueueCreateInfos + i);
       if (res < 0) {
          break;
       }
@@ -180,15 +159,11 @@ int vtest_create_device(int sock_fd,
       payload_size = sizeof(*queue_info) + sizeof(float) * queue_info->queue_count;
       res = virgl_block_write(sock_fd, queue_info, payload_size);
       CHECK_IO_RESULT(res, payload_size);
-
-      free(queue_info);
-      queue_info = NULL;
    }
 
    /* reading the device ID allocated by virgl (or the error code) */
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
-   CHECK_VTEST_RESULT(result);
 
    *id = result.result;
    RETURN(result.result);

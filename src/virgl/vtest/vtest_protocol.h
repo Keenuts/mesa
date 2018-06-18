@@ -21,10 +21,10 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <vulkan/vulkan.h>
-
 #ifndef VTEST_PROTOCOL
 #define VTEST_PROTOCOL
+
+#include <vulkan/vulkan.h>
 
 #define VTEST_DEFAULT_SOCKET_NAME "/tmp/.virgl_test"
 
@@ -58,6 +58,8 @@
 #define VCMD_VK_GET_PHYSICAL_DEVICE_SPARCE_PROPERTIES 10
 #define VCMD_VK_GET_QUEUE_FAMILY_PROPS 11
 #define VCMD_VK_CREATE_DEVICE 12
+#define VCMD_VK_CREATE_DESCRIPTOR_LAYOUT 13
+#define VCMD_VK_CREATE_BUFFER 14
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -93,6 +95,21 @@
 #define VCMD_BUSY_WAIT_HANDLE 0
 #define VCMD_BUSY_WAIT_FLAGS 1
 
+struct vtest_hdr {
+    union {
+        uint32_t raw[2];
+        struct {
+            uint32_t length;
+            uint32_t id;
+        };
+    };
+};
+
+struct vtest_result {
+   uint32_t error_code;
+   uint32_t result;
+};
+
 struct vtest_payload_device_get {
    uint32_t device_id;
 };
@@ -101,7 +118,7 @@ struct vtest_payload_queue_create {
    VkDeviceQueueCreateFlags flags;
    uint32_t queue_family_index;
    uint32_t queue_count;
-   float priorities[];
+   /* float priorities[]; */
 };
 
 struct vtest_payload_device_create {
@@ -110,6 +127,31 @@ struct vtest_payload_device_create {
    VkPhysicalDeviceFeatures features;
 
    uint32_t queue_info_count;
+};
+
+struct vtest_payload_descriptor_set_layout_bindings {
+   uint32_t binding;
+   uint32_t descriptor_type;
+   uint32_t descriptor_count;
+   uint32_t stage_flags;
+   /* uint32_t sampler_ids[]; */
+};
+
+struct vtest_payload_descriptor_set_layout {
+   uint32_t device_id;
+   uint32_t flags;
+   uint32_t binding_count;
+   /* struct vtest_payload_descriptor_set_layout_bindings[]; */
+};
+
+struct vtest_payload_create_buffer {
+   uint32_t device_id;
+   uint32_t flags;
+   uint64_t device_size;
+   uint32_t usage_flags;
+   uint32_t sharing_mode;
+   uint32_t queue_family_index_count;
+   /* uint32_t queue_indices[]; */
 };
 
 #endif

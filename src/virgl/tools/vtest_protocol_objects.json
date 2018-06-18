@@ -1,0 +1,28 @@
+[
+   {
+      "function": "vkCreateDescriptorSetLayout",
+      "output": "VkDescriptorSetLayout",
+
+      "chunks": [
+         {
+            "name": "intro",
+            "parent": null,
+            "content" : [
+               { "name": "flags" },
+               { "name" : "bindingCount" }
+            ]
+         },
+         {
+            "name": "pBindings",
+            "parent": "intro",
+            "count": "bindingCount",
+            "content" : [
+               { "name": "binding" },
+               { "name": "descriptorType" },
+               { "name": "descriptorCount" },
+               { "name": "stageFlags" }
+            ]
+         }
+      ]
+   }
+]

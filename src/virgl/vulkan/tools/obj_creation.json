@@ -1,0 +1,25 @@
+[
+   {
+      "function": "vkCreateDescriptorSetLayout",
+      "return": "VkDescriptorSetLayout",
+
+      "infos": [
+         { "name": "flags" },
+         { "name" : "bindingCount" },
+         {
+            "name": "pBindings",
+            "size": "bindingCount",
+            "content": [
+               { "name": "binding" },
+               { "name": "descriptorType" },
+               { "name": "descriptorCount" },
+               { "name": "stageFlags" },
+               {
+                  "name": "pImmutableSamplers",
+                  "size": "descriptorCount"
+               }
+            ]
+         }
+      ]
+   }
+]

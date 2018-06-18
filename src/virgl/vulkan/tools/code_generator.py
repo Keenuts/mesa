@@ -43,6 +43,15 @@ class function():
 
         return format("%s %s(%s);" % (str(self.ret_value), str(self.name), params))
 
+    def to_code(self):
+        params = []
+
+        for p in self.params:
+            params.append(p.decl)
+
+        params = ",\n\t".join(params)
+        return format("%s %s(%s)" % (str(self.ret_value), str(self.name), params))
+
 def get_entrypoints(doc):
     entrypoints = {}
 

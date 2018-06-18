@@ -5,7 +5,7 @@ vgl_codegen_icdfiles_py       = files('tools/codegen_icdfiles.py')
 
 # Files used to generate object creations related functions
 vgl_codegen_objects_py         = files('tools/codegen_objects.py')
-vgl_codegen_objects_config     = files('tools/obj_creation.json')
+vgl_codegen_objects_config     = files('tools/vtest_protocol_objects.json')
 
 # Files used to generate vulkan ICD's entrypoints
 # To add an entrypoint implementation, add en entry in

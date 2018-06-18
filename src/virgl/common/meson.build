@@ -1,4 +1,3 @@
-
 utils_files = files(
     'list.c',
     'list.h',

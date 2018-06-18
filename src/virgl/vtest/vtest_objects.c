@@ -50,7 +50,7 @@ int vtest_create_descriptor_layout(int sock_fd,
    CHECK_IO_RESULT(res, sizeof(result));
 
    *descriptor_set_id = result.result;
-   RETURN(result.result);
+   RETURN(result.error_code);
 }
 
 int vtest_create_buffer(int sock_fd,
@@ -83,5 +83,5 @@ int vtest_create_buffer(int sock_fd,
    CHECK_IO_RESULT(res, sizeof(result));
 
    *buffer_id = result.result;
-   RETURN(result.result);
+   RETURN(result.error_code);
 }

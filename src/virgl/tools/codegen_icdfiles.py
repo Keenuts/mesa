@@ -13,7 +13,7 @@ def main():
     json_data = {
         'file_format_version': '1.0.0',
         'ICD': {
-            'library_path': os.path.join(args.lib_path, "libvulkan_virgl.so"),
+            'library_path': os.path.join(args.lib_path, "vulkan/libvulkan_virgl.so"),
             'api_version': "1.1.0",
         },
     };

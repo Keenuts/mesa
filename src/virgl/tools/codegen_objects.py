@@ -185,7 +185,7 @@ def generate_code_read_result():
     code = [ "" ]
 
     code.append('res = virgl_block_read(sock_fd, &result, sizeof(result));')
-    code.append('CHECK_IO_RESULT(res, sizeof(res));')
+    code.append('CHECK_IO_RESULT(res, sizeof(result));')
     code.append('*output = result.result;')
     code.append('RETURN(result.error_code);')
 

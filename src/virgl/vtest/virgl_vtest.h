@@ -1,6 +1,7 @@
 #ifndef VIRGL_VTEST_H
 #define VIRGL_VTEST_H
 
+#include <stdio.h>
 #include <vulkan/vulkan.h>
 #include "vulkan/vk_structs.h"
 

@@ -6,7 +6,7 @@ import json
 import os
 import sys
 
-CREATION_JSON = "./vtest_protocol_objects.json"
+CREATION_JSON = "vtest_protocol_objects.json"
 
 INDENT_SIZE = 3
 INDENT = INDENT_SIZE * " "
@@ -19,13 +19,18 @@ def camel_to_snake(name):
     return ''.join([ ("_" + c.lower() if c.isupper() else c) for c in name ])
 
 def generate_prototype(spec):
-    old_name = spec.name
-    spec.name = "vtest_" + spec.name
-    output = spec.to_code()
-    output += ";"
 
-    spec.name = old_name
-    return output
+    function_name = "vtest_" + spec.name
+    args = []
+
+    args.append("int sock_fd")
+    args.append("uint32_t handle")
+    args.append("const {} *create_info".format(spec.params[1].type))
+    args.append("uint32_t  *output")
+
+    
+    args = ',\n\t'.join(args)
+    return 'int {}({});'.format(function_name, args)
 
 def generate_structs(protocol):
     indent = " " * INDENT_SIZE;
@@ -36,13 +41,20 @@ def generate_structs(protocol):
         code = 'struct payload_{0}_{1} '.format(protocol['function'], name)
         code += OPEN_SCOPE
 
+        if chunk['name'] == 'intro':
+            code += '{}uint32_t handle;{}'.format(indent, EOL)
+
         for field in chunk['content']:
+            if chunk['name'] == 'intro' and field['name'] == 'handle':
+                print("ERROR: 'handle' field in 'intro' chunk is reserved.")
+                exit(1)
+
             typename = DEFAULT_TYPENAME
             if 'type' in field:
                 typename = field['type']
-            code += '{0}{1} {2}{3}'.format(indent, typename, field['name'], EOL)
+            code += '{0}{1} {2};{3}'.format(indent, typename, field['name'], EOL)
             
-        code += CLOSE_SCOPE
+        code += "};" + EOL
 
         structs.append(code)
 
@@ -53,6 +65,7 @@ def generate_code_init(protocol):
     code = []
 
     code.append("int res;")
+    code.append("struct vtest_result result;")
     code.append("struct vtest_hdr cmd;")
 
     for name in protocol['chunks']:
@@ -71,6 +84,12 @@ def generate_code_send_header(id):
     code.append('CHECK_IO_RESULT(res, sizeof(cmd));')
 
     code = [ indent + c for c in code]
+    return code
+
+def generate_code_intro_chunk(chunk):
+    code = generate_code_simple_chunk(chunk)
+    code.insert(0, '{}.handle = handle;'.format(chunk['name']))
+
     return code
 
 def generate_code_simple_chunk(chunk):
@@ -146,7 +165,13 @@ def generate_code_send_chunks(protocol):
     for name in protocol['chunks']:
         chunk = protocol['chunks'][name]
 
-        if chunk['parent'] == None:
+        if chunk['name'] == 'intro' and chunk['parent'] != None:
+            print("ERROR: intro chunk must be a root.")
+            exit(1)
+
+        if chunk['name'] == 'intro':
+            code += generate_code_intro_chunk(chunk)
+        elif chunk['parent'] == None:
             code += generate_code_simple_chunk(chunk)
         else:
             code += generate_code_nested_chunk(0, protocol, chunk)
@@ -161,8 +186,8 @@ def generate_code_read_result():
 
     code.append('res = virgl_block_read(sock_fd, &result, sizeof(result));')
     code.append('CHECK_IO_RESULT(res, sizeof(res));')
-    code.append('*output = result.result')
-    code.append('RETURN(result.error_code)')
+    code.append('*output = result.result;')
+    code.append('RETURN(result.error_code);')
 
     code = [ indent + c for c in code]
     return code
@@ -192,6 +217,21 @@ def cook_entry(protocol):
         s_name = 'payload_{0}_{1}'.format(protocol['function'], name)
         entry['typename'] = 'struct ' + s_name
 
+HEADER_PROLOG = '           \n\
+#pragma once                \n\
+                            \n\
+#include <vulkan/vulkan.h>  \n\
+'
+
+BODY_PROLOG = '             \n\
+#include <string.h>         \n\
+#include <vulkan/vulkan.h>  \n\
+                            \n\
+#include "common/macros.h" \n\
+#include "virgl_vtest.h" \n\
+#include "vtest_protocol.h" \n\
+#include "vtest_objects.h"  \n\
+'
 
 def generate_code(to_generate, vk_functions):
     prototype_declarations = []
@@ -214,11 +254,13 @@ def generate_code(to_generate, vk_functions):
         struct_declarations += generate_structs(entry);
         function_implems.append(generate_function(spec, entry))
 
-    header = EOL.join(prototype_declarations)
+    header = HEADER_PROLOG
+    header += EOL.join(prototype_declarations)
     header += EOL + EOL
     header += EOL.join(struct_declarations)
 
-    body = (EOL * 2).join(function_implems)
+    body = BODY_PROLOG
+    body += (EOL * 2).join(function_implems)
     return (0, body, header)
 
 def main():
@@ -231,7 +273,7 @@ def main():
     to_generate = []
     vk_functions = {}
 
-    with open(CREATION_JSON) as f:
+    with open(os.path.join(script_path, CREATION_JSON)) as f:
         to_generate += json.loads(f.read())
 
     vk_functions = code_gen.get_entrypoints(et.parse(args.xml))
@@ -243,11 +285,16 @@ def main():
     if err != 0:
         return err;
 
-    print(header_code)
-    print()
-    print()
-    print()
-    print(body_code)
+    outputs = [
+        ("vtest_objects.h", header_code),
+        ("vtest_objects.c", body_code),
+    ]
+
+    for task in outputs:
+        path = os.path.join(args.outdir, task[0])
+        with open(path, "w") as f:
+            f.write(task[1])
+            print("{} generated.".format(task[0]))
 
 if __name__ == '__main__':
     exit(main())

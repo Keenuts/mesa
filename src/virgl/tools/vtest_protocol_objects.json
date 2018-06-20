@@ -21,14 +21,28 @@
                { "name": "descriptorCount" },
                { "name": "stageFlags" }
             ]
-         },
-         "X": {
-            "parent": "pBindings",
-            "count": "binding",
-            "content": [
-               { "name": "toto" }
-            ]
          }
+      }
+   },
+   {
+      "function": "vkCreateBuffer",
+      "output": "VkBuffer",
+      "id": "VCMD_VK_CREATE_BUFFER",
+
+      "chunks": {
+          "intro": {
+              "parent": null,
+              "content": [
+                { "name": "flags" },
+                {
+                    "name": "size",
+                    "type": "uint64_t"
+                },
+                { "name": "usage" },
+                { "name": "sharingMode" },
+                { "name": "queueFamilyIndexCount" }
+              ]
+          }
       }
    }
 ]

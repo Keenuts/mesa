@@ -7,6 +7,11 @@
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
 
+/* file generated during compilation
+   FIXME: should be done at the config
+ */
+#include "vtest/vtest_objects.h"
+
 VkResult
 vgl_vkCreateDescriptorSetLayout(VkDevice device,
                                 const VkDescriptorSetLayoutCreateInfo *info,
@@ -28,10 +33,10 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
       RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
    }
 
-   res = vtest_create_descriptor_layout(icd_state.io_fd,
-                                        vk_device->identifier,
-                                        info,
-                                        &vk_layout->identifier);
+   res = vtest_create_descriptor_set_layout(icd_state.io_fd,
+                                            vk_device->identifier,
+                                            info,
+                                            &vk_layout->identifier);
    if (res < 0) {
       RETURN(VK_ERROR_DEVICE_LOST);
    }

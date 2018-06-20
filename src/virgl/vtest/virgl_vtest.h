@@ -46,15 +46,4 @@ int vtest_get_device_queues(int sock_fd,
                             uint32_t device_id,
                             uint32_t *queue_count,
                             struct vk_queue **queues);
-
-int vtest_create_descriptor_layout(int sock_fd,
-                                   uint32_t device_id,
-                                   const VkDescriptorSetLayoutCreateInfo *info,
-                                   uint32_t *descriptor_set_id);
-
-int vtest_create_buffer(int sock_fd,
-                        uint32_t device_id,
-                        const VkBufferCreateInfo *info,
-                        uint32_t *buffer_id);
-
 #endif

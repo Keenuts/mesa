@@ -15,6 +15,7 @@ vgl_codegen_entrypoints = custom_target(
             '--outdir', meson.current_build_dir(),
     ],
     depend_files : vgl_codegen_entrypoints_py,
+    depends: vgl_codegen_vtest_objects
 )
 
 vgl_vulkan_files = files(

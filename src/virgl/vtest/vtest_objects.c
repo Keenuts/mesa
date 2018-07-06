@@ -102,7 +102,13 @@ int vtest_allocate_descriptor_sets(int sock_fd,
    
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
-   *output = result.result;
+   if (result.error_code != 0) {
+      RETURN(result.error_code);
+   }
+
+   res = virgl_block_read(sock_fd, output, sizeof(*output) * result.result);
+   CHECK_IO_RESULT(res, result.result * sizeof(uint32_t));
+
    RETURN(result.error_code);
 }
 

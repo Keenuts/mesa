@@ -15,5 +15,7 @@
     "vkCreateCommandPool",
     "vkCreateDescriptorSetLayout",
     "vkCreateBuffer",
+    "vkAllocateDescriptorSets",
+    "vkCreateShaderModule",
     ""
 ]

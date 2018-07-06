@@ -60,7 +60,7 @@ struct vk_device
    struct vk_command_pool command_pool;
 };
 
-struct vk_descriptor_layout {
+struct vk_descriptor_set_layout {
    VK_LOADER_DATA loader_data;
    uint32_t identifier;
 };
@@ -70,5 +70,9 @@ struct vk_buffer {
    uint32_t identifier;
 };
 
+struct vk_shader_module {
+   VK_LOADER_DATA loader_data;
+   uint32_t identifier;
+};
 
 #endif

@@ -22,7 +22,7 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
 
    int res;
    struct vk_device *vk_device = NULL;
-   struct vk_descriptor_layout *vk_layout = NULL;
+   struct vk_descriptor_set_layout *vk_layout = NULL;
    
    vk_device = FROM_HANDLE(vk_device, device);
 
@@ -47,6 +47,48 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
 }
 
 VkResult
+vgl_vkAllocateDescriptorSets(VkDevice device,
+                         const VkDescriptorSetAllocateInfo *info,
+                         VkDescriptorSet *vk_handles)
+{
+   TRACE_IN();
+
+   int res;
+   struct vk_device *vk_device = NULL;
+   uint32_t *handles = NULL;
+
+   if (0 == info->descriptorSetCount) {
+      RETURN(VK_SUCCESS);
+   }
+
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   /* Converting VK handles to VGL handles */
+   handles = alloca(sizeof(*handles) * info->descriptorSetCount);
+   for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
+      struct vk_descriptor_set_layout *layout = NULL;
+
+      layout = FROM_HANDLE(layout, info->pSetLayouts[i]);
+      handles[i] = layout->identifier;
+   }
+
+   res = vtest_allocate_descriptor_sets(icd_state.io_fd,
+                                        vk_device->identifier,
+                                        info,
+                                        handles,
+                                        handles);
+   if (0 > res) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
+      vk_handles[i] = TO_HANDLE((uintptr_t)handles[i]);
+   }
+
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
 vgl_vkCreateBuffer(VkDevice device,
                    const VkBufferCreateInfo *info,
                    const VkAllocationCallbacks *allocators,
@@ -62,7 +104,7 @@ vgl_vkCreateBuffer(VkDevice device,
    vk_buffer = vk_malloc(sizeof(*vk_buffer), allocators,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
 
-   if (vk_buffer == NULL) {
+   if (NULL == vk_buffer) {
       RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
    }
 
@@ -76,5 +118,35 @@ vgl_vkCreateBuffer(VkDevice device,
 
    *buffer = TO_HANDLE(vk_buffer);
 
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkCreateShaderModule(VkDevice device,
+                         const VkShaderModuleCreateInfo *info,
+                         const VkAllocationCallbacks *allocators,
+                         VkShaderModule *shader_module)
+{
+   TRACE_IN();
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_shader_module *vk_shader_module = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+   vk_shader_module = vk_malloc(sizeof(*vk_shader_module), allocators,
+                                VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (NULL == vk_shader_module) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
+
+   res = vtest_create_shader_module(icd_state.io_fd,
+                                    vk_device->identifier,
+                                    info,
+                                    &vk_shader_module->identifier);
+   if (res < 0) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   *shader_module = TO_HANDLE(vk_shader_module);
    RETURN(VK_SUCCESS);
 }

@@ -12,7 +12,7 @@
     } while (0);
 
 #define CHECK_IO_RESULT(Done, Expected)                              \
-   if ((Done) != (Expected)) {                                       \
+   if ((Done) < 0 || (size_t)(Done) != (Expected)) {                 \
       fprintf(stderr, "vtest IO failed. expected 0x%zx got 0x%zx\n", \
               (uint64_t)(Expected), (uint64_t)(Done));               \
       RETURN(-1);                                                    \
@@ -24,8 +24,8 @@
       RETURN(-2);                                                             \
    }
 
-int virgl_block_write(int fd, const void *buf, int size);
-int virgl_block_read(int fd, void *buf, int size);
+ssize_t virgl_block_write(int fd, const void *ptr, size_t size);
+ssize_t virgl_block_read(int fd, void *ptr, size_t size);
 
 int virgl_vtest_connect(void);
 

@@ -13,7 +13,7 @@ int vtest_get_physical_device_count(int sock_fd, uint32_t *device_count)
 
    struct vtest_hdr cmd;
    struct vtest_result result;
-   int res;
+   ssize_t res;
 
    INITIALIZE_HDR(cmd, VCMD_VK_ENUMERATE_PHYSICAL_DEVICES, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
@@ -42,7 +42,7 @@ int vtest_get_sparse_properties(int sock_fd,
    struct vtest_hdr cmd;
    struct vtest_result result;
    struct vtest_payload_device_get payload;
-   int res;
+   ssize_t res;
 
    TRACE_IN();
 
@@ -69,7 +69,7 @@ int vtest_get_queue_family_properties(int sock_fd,
                                       uint32_t *family_count,
                                       VkQueueFamilyProperties **families)
 {
-   int res;
+   ssize_t res;
    struct vtest_hdr cmd;
    struct vtest_payload_device_get payload;
    struct vtest_result result;
@@ -96,7 +96,7 @@ int vtest_get_queue_family_properties(int sock_fd,
    }
 
    res = virgl_block_read(sock_fd, *families, size);
-   CHECK_IO_RESULT(res, (int)size);
+   CHECK_IO_RESULT(res, size);
 
    RETURN(0);
 }
@@ -123,8 +123,8 @@ int vtest_create_device(int sock_fd,
    struct vtest_payload_device_create payload;
    struct vtest_payload_queue_create *queue_info = NULL;
    struct vtest_result result;
-   int payload_size;
-   int res;
+   size_t payload_size;
+   ssize_t res;
 
    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DEVICE, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));

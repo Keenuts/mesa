@@ -36,10 +36,10 @@
 #define VTEST_SOCKET_NAME "/tmp/.virgl_test"
 
 /* block read/write routines */
-int virgl_block_write(int fd, const void *ptr, int size)
+ssize_t virgl_block_write(int fd, const void *ptr, size_t size)
 {
-    int left;
-    int ret;
+    size_t left;
+    ssize_t ret;
     left = size;
     do {
         ret = write(fd, ptr, left);
@@ -48,20 +48,21 @@ int virgl_block_write(int fd, const void *ptr, int size)
         left -= ret;
         ptr += ret;
     } while (left);
+
     return size;
 }
 
-int virgl_block_read(int fd, void *buf, int size)
+ssize_t virgl_block_read(int fd, void *buf, size_t size)
 {
     void *ptr = buf;
-    int left;
-    int ret;
+    size_t left;
+    ssize_t ret;
     left = size;
     do {
         ret = read(fd, ptr, left);
         if (ret <= 0) {
             fprintf(stderr,
-                    "lost connection to rendering server on %d read %d %d\n",
+                    "lost connection to rendering server on %zu read %zu %d\n",
                     size, ret, errno);
             abort();
             return ret < 0 ? -errno : 0;

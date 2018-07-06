@@ -44,5 +44,49 @@
               ]
           }
       }
+   },
+   {
+      "function": "vkAllocateDescriptorSets",
+      "output": "VkDescriptorSet",
+      "id": "VCMD_VK_ALLOCATE_DESCRIPTORS",
+
+      "chunks": {
+          "intro": {
+              "parent": null,
+              "content": [
+                { "name": "descriptorPool" },
+                { "name": "descriptorSetCount" }
+              ]
+          },
+          "pSetLayouts": {
+             "parent": "intro",
+             "count": "descriptorSetCount",
+             "content": [
+                { "name": "toto" }
+             ]
+
+          }
+      }
+   },
+   {
+      "function": "vkCreateShaderModule",
+      "output": "VkShaderModule",
+      "id": "VCMD_VK_CREATE_SHADER_MODULE",
+
+      "chunks": {
+          "intro": {
+              "parent": null,
+              "content": [
+                { "name": "flags" },
+                { "name": "codeSize" }
+              ]
+          },
+          "pCode": {
+             "parent": "intro",
+             "count": "codeSize",
+             "content": [
+             ]
+          }
+      }
    }
 ]

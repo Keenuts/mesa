@@ -3,14 +3,14 @@ from mako.template import Template
 import json
 import xml.etree.cElementTree as et
 
-class function_param():
+class FunctionParameter:
     def __init__(self, typename, name, decl):
         self.type = typename
         self.name = name
         self.decl = decl
 
     def __str__(self):
-        return self.type + " " + self.name
+        return self.decl
 
 def hash_name(name):
     h = 0
@@ -25,7 +25,7 @@ def hash_name(name):
 
     return h
 
-class function():
+class Function:
     def __init__(self, name, ret_value, params):
         self.name = name
         self.ret_value = ret_value
@@ -62,15 +62,50 @@ def get_entrypoints(doc):
             name = command.find('./proto/name').text
             ret_type = command.find('./proto/type').text
             params = [ 
-                function_param(
+                FunctionParameter(
                     p.find('./type').text,
                     p.find('./name').text,
                     ''.join(p.itertext())
                 ) for p in command.findall('./param') ]
 
-            entrypoints[name] = function(name, ret_type, params)
+            entrypoints[name] = Function(name, ret_type, params)
 
     return entrypoints
+
+def get_structs(doc):
+    structs = {}
+
+    for entry in doc.findall('./types/type'):
+        if 'category' not in entry.attrib:
+            continue
+
+        if entry.attrib['category'] != "struct":
+            continue
+
+        name = entry.attrib['name']
+        members = [
+            FunctionParameter(
+                    p.find('./type').text,
+                    p.find('./name').text,
+                    ''.join(p.itertext())
+
+                    ) for p in entry.findall('./member') ]
+
+        structs[name] = {
+            "name": name,
+            "type": "struct",
+            "members": members
+        }
+
+    return structs
+
+def load_spec(doc):
+    dic = {}
+
+    dic = dict(dic, **get_entrypoints(doc))
+    dic = dict(dic, **get_structs(doc))
+
+    return dic
 
 def filter_listed(function_list, entrypoints):
     listed, non_listed = [], []
@@ -80,7 +115,7 @@ def filter_listed(function_list, entrypoints):
             listed += [ entrypoints[f] ]
         else:
             non_listed += [ 
-                function(f, "void", [ function_param("void", "", "void") ]),
+                Function(f, "void", [ FunctionParameter("void", "", "void") ]),
             ]
 
     return (listed, non_listed)

@@ -7,9 +7,9 @@
 #include "vtest_objects.h"
 
 int vtest_create_descriptor_set_layout(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorSetLayoutCreateInfo *create_info,
-	uint32_t  *output)
+   uint32_t handle,
+   const VkDescriptorSetLayoutCreateInfo *create_info,
+   uint32_t  *output)
 {
 
    ssize_t res;
@@ -45,9 +45,9 @@ int vtest_create_descriptor_set_layout(int sock_fd,
 
 
 int vtest_create_buffer(int sock_fd,
-	uint32_t handle,
-	const VkBufferCreateInfo *create_info,
-	uint32_t  *output)
+   uint32_t handle,
+   const VkBufferCreateInfo *create_info,
+   uint32_t  *output)
 {
 
    ssize_t res;
@@ -75,10 +75,11 @@ int vtest_create_buffer(int sock_fd,
 }
 
 int vtest_allocate_descriptor_sets(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorSetAllocateInfo *create_info,
+   uint32_t handle,
+   uint32_t pool_handle,
+   const VkDescriptorSetAllocateInfo *create_info,
    uint32_t *handles,
-	uint32_t  *output)
+   uint32_t  *output)
 {
 
    ssize_t res;
@@ -91,7 +92,7 @@ int vtest_allocate_descriptor_sets(int sock_fd,
    CHECK_IO_RESULT(res, sizeof(cmd));
 
    intro.handle = handle;
-   intro.descriptorPool = 0; //FIXME: better pools
+   intro.descriptorPool = pool_handle;
    intro.descriptorSetCount = create_info->descriptorSetCount;
    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
    CHECK_IO_RESULT(res, sizeof(intro));
@@ -112,9 +113,9 @@ int vtest_allocate_descriptor_sets(int sock_fd,
 }
 
 int vtest_create_shader_module(int sock_fd,
-	uint32_t handle,
-	const VkShaderModuleCreateInfo *create_info,
-	uint32_t  *output)
+   uint32_t handle,
+   const VkShaderModuleCreateInfo *create_info,
+   uint32_t  *output)
 {
 
    ssize_t res;
@@ -143,9 +144,9 @@ int vtest_create_shader_module(int sock_fd,
 }
 
 int vtest_create_descriptor_pool(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorPoolCreateInfo *create_info,
-	uint32_t  *output)
+   uint32_t handle,
+   const VkDescriptorPoolCreateInfo *create_info,
+   uint32_t  *output)
 {
 
    int res;

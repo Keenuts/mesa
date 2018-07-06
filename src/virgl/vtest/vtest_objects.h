@@ -1,28 +1,36 @@
-           
-#pragma once                
-                            
-#include <vulkan/vulkan.h>  
+#pragma once
+#include <vulkan/vulkan.h>
+
+/* Functions */
+
 int vtest_create_descriptor_set_layout(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorSetLayoutCreateInfo *create_info,
-	uint32_t  *output);
+   uint32_t handle,
+   const VkDescriptorSetLayoutCreateInfo *create_info,
+   uint32_t  *output);
+
 int vtest_create_buffer(int sock_fd,
-	uint32_t handle,
-	const VkBufferCreateInfo *create_info,
-	uint32_t  *output);
+   uint32_t handle,
+   const VkBufferCreateInfo *create_info,
+   uint32_t  *output);
+
 int vtest_allocate_descriptor_sets(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorSetAllocateInfo *create_info,
+   uint32_t handle,
+   uint32_t pool_handle,
+   const VkDescriptorSetAllocateInfo *create_info,
    uint32_t *handles,
-	uint32_t  *output);
+   uint32_t  *output);
+
 int vtest_create_shader_module(int sock_fd,
-	uint32_t handle,
-	const VkShaderModuleCreateInfo *create_info,
-	uint32_t  *output);
+   uint32_t handle,
+   const VkShaderModuleCreateInfo *create_info,
+   uint32_t  *output);
+
 int vtest_create_descriptor_pool(int sock_fd,
-	uint32_t handle,
-	const VkDescriptorPoolCreateInfo *create_info,
-	uint32_t  *output);
+   uint32_t handle,
+   const VkDescriptorPoolCreateInfo *create_info,
+   uint32_t  *output);
+
+/* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
    uint32_t handle;

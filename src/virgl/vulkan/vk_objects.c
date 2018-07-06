@@ -47,7 +47,7 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_descriptor_set_layout *vk_layout = NULL;
-   
+
    vk_device = FROM_HANDLE(vk_device, device);
 
    vk_layout = vk_malloc(sizeof(*vk_layout), allocators,
@@ -79,6 +79,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
 
    int res;
    struct vk_device *vk_device = NULL;
+   struct vk_descriptor_pool *vk_pool = NULL;
    uint32_t *handles = NULL;
 
    if (0 == info->descriptorSetCount) {
@@ -86,6 +87,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    }
 
    vk_device = FROM_HANDLE(vk_device, device);
+   vk_pool = FROM_HANDLE(vk_pool, info->descriptorPool);
 
    /* Converting VK handles to VGL handles */
    handles = alloca(sizeof(*handles) * info->descriptorSetCount);
@@ -98,6 +100,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
 
    res = vtest_allocate_descriptor_sets(icd_state.io_fd,
                                         vk_device->identifier,
+                                        vk_pool->identifier,
                                         info,
                                         handles,
                                         handles);

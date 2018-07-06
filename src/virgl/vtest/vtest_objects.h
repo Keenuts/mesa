@@ -19,6 +19,10 @@ int vtest_create_shader_module(int sock_fd,
 	uint32_t handle,
 	const VkShaderModuleCreateInfo *create_info,
 	uint32_t  *output);
+int vtest_create_descriptor_pool(int sock_fd,
+	uint32_t handle,
+	const VkDescriptorPoolCreateInfo *create_info,
+	uint32_t  *output);
 
 struct payload_create_descriptor_set_layout_intro {
    uint32_t handle;
@@ -52,4 +56,16 @@ struct payload_create_shader_module_intro {
    uint32_t handle;
    uint32_t flags;
    uint32_t codeSize;
+};
+
+struct payload_create_descriptor_pool_intro {
+   uint32_t handle;
+   uint32_t flags;
+   uint32_t maxSets;
+   uint32_t poolSizeCount;
+};
+
+struct payload_create_descriptor_pool_pPoolSizes {
+   uint32_t type;
+   uint32_t descriptorCount;
 };

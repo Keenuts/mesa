@@ -1,11 +1,10 @@
-             
-#include <string.h>         
-#include <vulkan/vulkan.h>  
-                            
-#include "common/macros.h" 
-#include "virgl_vtest.h" 
-#include "vtest_protocol.h" 
-#include "vtest_objects.h"  
+#include <string.h>
+#include <vulkan/vulkan.h>
+
+#include "common/macros.h"
+#include "virgl_vtest.h"
+#include "vtest_protocol.h"
+#include "vtest_objects.h"
 
 int vtest_create_descriptor_set_layout(int sock_fd,
 	uint32_t handle,
@@ -18,17 +17,17 @@ int vtest_create_descriptor_set_layout(int sock_fd,
    struct vtest_hdr cmd;
    struct payload_create_descriptor_set_layout_intro intro;
    struct payload_create_descriptor_set_layout_pBindings pBindings;
-   
+
    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DESCRIPTOR_LAYOUT, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
-   
+
    intro.handle = handle;
    intro.flags = create_info->flags;
    intro.bindingCount = create_info->bindingCount;
    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
    CHECK_IO_RESULT(res, sizeof(intro));
-   
+
    for (uint32_t i = 0; i < create_info->bindingCount; i++) {
       pBindings.binding = create_info->pBindings[i].binding;
       pBindings.descriptorType = create_info->pBindings[i].descriptorType;
@@ -37,7 +36,7 @@ int vtest_create_descriptor_set_layout(int sock_fd,
       res = virgl_block_write(sock_fd, &pBindings, sizeof(pBindings));
       CHECK_IO_RESULT(res, sizeof(pBindings));
    }
-   
+
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
@@ -55,11 +54,11 @@ int vtest_create_buffer(int sock_fd,
    struct vtest_result result;
    struct vtest_hdr cmd;
    struct payload_create_buffer_intro intro;
-   
+
    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_BUFFER, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
-   
+
    intro.handle = handle;
    intro.flags = create_info->flags;
    intro.size = create_info->size;
@@ -68,7 +67,7 @@ int vtest_create_buffer(int sock_fd,
    intro.queueFamilyIndexCount = create_info->queueFamilyIndexCount;
    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
    CHECK_IO_RESULT(res, sizeof(intro));
-   
+
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
@@ -86,7 +85,7 @@ int vtest_allocate_descriptor_sets(int sock_fd,
    struct vtest_result result;
    struct vtest_hdr cmd;
    struct payload_allocate_descriptor_sets_intro intro;
-   
+
    INITIALIZE_HDR(cmd, VCMD_VK_ALLOCATE_DESCRIPTORS, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
@@ -96,10 +95,10 @@ int vtest_allocate_descriptor_sets(int sock_fd,
    intro.descriptorSetCount = create_info->descriptorSetCount;
    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
    CHECK_IO_RESULT(res, sizeof(intro));
-   
-   res = virgl_block_write(sock_fd, handles, sizeof(*handles * intro.descriptorSetCount));
-   CHECK_IO_RESULT(res, sizeof(sizeof(*handles * intro.descriptorSetCount)));
-   
+
+   res = virgl_block_write(sock_fd, handles, sizeof(*handles) * intro.descriptorSetCount);
+   CHECK_IO_RESULT(res, sizeof(*handles) * intro.descriptorSetCount);
+
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    if (result.error_code != 0) {
@@ -122,11 +121,11 @@ int vtest_create_shader_module(int sock_fd,
    struct vtest_result result;
    struct vtest_hdr cmd;
    struct payload_create_shader_module_intro intro;
-   
+
    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_SHADER_MODULE, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
-   
+
    intro.handle = handle;
    intro.flags = create_info->flags;
    intro.codeSize = create_info->codeSize;
@@ -136,7 +135,43 @@ int vtest_create_shader_module(int sock_fd,
 
    res = virgl_block_write(sock_fd, create_info->pCode, create_info->codeSize);
    CHECK_IO_RESULT(res, create_info->codeSize);
-   
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   *output = result.result;
+   RETURN(result.error_code);
+}
+
+int vtest_create_descriptor_pool(int sock_fd,
+	uint32_t handle,
+	const VkDescriptorPoolCreateInfo *create_info,
+	uint32_t  *output)
+{
+
+   int res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_create_descriptor_pool_intro intro;
+   struct payload_create_descriptor_pool_pPoolSizes pPoolSizes;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DESCRIPTOR_POOL, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   intro.handle = handle;
+   intro.flags = create_info->flags;
+   intro.maxSets = create_info->maxSets;
+   intro.poolSizeCount = create_info->poolSizeCount;
+   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+   CHECK_IO_RESULT(res, sizeof(intro));
+
+   for (uint32_t i = 0; i < create_info->poolSizeCount; i++) {
+      pPoolSizes.type = create_info->pPoolSizes[i].type;
+      pPoolSizes.descriptorCount = create_info->pPoolSizes[i].descriptorCount;
+      res = virgl_block_write(sock_fd, &pPoolSizes, sizeof(pPoolSizes));
+      CHECK_IO_RESULT(res, sizeof(pPoolSizes));
+   }
+
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;

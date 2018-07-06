@@ -88,5 +88,29 @@
              ]
           }
       }
+   },
+   {
+      "function": "vkCreateDescriptorPool",
+      "output": "VkDescriptorPool",
+      "id": "VCMD_VK_CREATE_DESCRIPTOR_POOL",
+
+      "chunks": {
+         "intro": {
+            "parent": null,
+            "content": [
+               { "name": "flags" },
+               { "name": "maxSets" },
+               { "name": "poolSizeCount" }
+            ]
+         },
+         "pPoolSizes": {
+            "parent": "intro",
+            "count": "poolSizeCount",
+            "content": [
+               { "name": "type" },
+               { "name": "descriptorCount" }
+            ]
+         }
+      }
    }
 ]

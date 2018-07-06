@@ -39,6 +39,7 @@ struct vk_queue {
 
 struct vk_descriptor_pool
 {
+   uint32_t identifier;
    const VkAllocationCallbacks *allocators;
 };
 
@@ -56,7 +57,6 @@ struct vk_device
    uint32_t queue_count;
    struct vk_queue *queues;
 
-   struct vk_descriptor_pool descriptor_pool;
    struct vk_command_pool command_pool;
 };
 

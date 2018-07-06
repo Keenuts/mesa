@@ -13,6 +13,30 @@
 #include "vtest/vtest_objects.h"
 
 VkResult
+vgl_vkCreateDescriptorPool(VkDevice device,
+                           const VkDescriptorPoolCreateInfo * create_info,
+                           const VkAllocationCallbacks * allocators,
+                           VkDescriptorPool *pool)
+{
+   TRACE_IN();
+
+   struct vk_descriptor_pool *vk_pool = NULL;;
+   struct vk_device *vk_device = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   vk_pool = vk_malloc(sizeof(*vk_pool), allocators,
+                       VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   vtest_create_descriptor_pool(icd_state.io_fd,
+                                vk_device->identifier,
+                                create_info,
+                                &vk_pool->identifier);
+
+   *pool = TO_HANDLE(vk_pool);
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
 vgl_vkCreateDescriptorSetLayout(VkDevice device,
                                 const VkDescriptorSetLayoutCreateInfo *info,
                                 const VkAllocationCallbacks *allocators,

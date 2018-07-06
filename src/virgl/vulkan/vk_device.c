@@ -335,28 +335,6 @@ vgl_vkGetDeviceQueue(VkDevice device,
 }
 
 VkResult
-vgl_vkCreateDescriptorPool(VkDevice device,
-                           const VkDescriptorPoolCreateInfo * create_info,
-                           const VkAllocationCallbacks * allocators,
-                           VkDescriptorPool * pool)
-{
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(create_info);
-   UNUSED_PARAMETER(allocators);
-   UNUSED_PARAMETER(pool);
-
-   struct vk_device *dev = FROM_HANDLE(dev, device);
-
-   /* for now, no pool. We are stupid and we will allocate/free every time */
-   dev->descriptor_pool.allocators = allocators;
-
-   *pool = TO_HANDLE(&dev->descriptor_pool);
-   RETURN(VK_SUCCESS);
-}
-
-VkResult
 vgl_vkCreateCommandPool(VkDevice device,
                         const VkCommandPoolCreateInfo * create_info,
                         const VkAllocationCallbacks * allocators,

@@ -61,7 +61,6 @@ struct vk_device
 };
 
 struct vk_descriptor_set_layout {
-   VK_LOADER_DATA loader_data;
    uint32_t identifier;
 };
 
@@ -71,7 +70,6 @@ struct vk_buffer {
 };
 
 struct vk_shader_module {
-   VK_LOADER_DATA loader_data;
    uint32_t identifier;
 };
 

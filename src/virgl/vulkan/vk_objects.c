@@ -126,7 +126,7 @@ vgl_vkCreateBuffer(VkDevice device,
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_buffer *vk_buffer = NULL;
-   
+
    vk_device = FROM_HANDLE(vk_device, device);
    vk_buffer = vk_malloc(sizeof(*vk_buffer), allocators,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
@@ -176,4 +176,43 @@ vgl_vkCreateShaderModule(VkDevice device,
 
    *shader_module = TO_HANDLE(vk_shader_module);
    RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkCreatePipelineLayout(VkDevice device,
+                           const VkPipelineLayoutCreateInfo *create_info,
+                           const VkAllocationCallbacks *allocators,
+                           VkPipelineLayout *pipeline_layout)
+{
+    TRACE_IN();
+    int res;
+    struct vk_device *vk_device = NULL;
+    struct vk_pipeline_layout *vk_pipeline_layout = NULL;
+    struct vk_descriptor_set_layout *vk_layout = NULL;
+    uint32_t *set_handles = NULL;
+
+    vk_device = FROM_HANDLE(vk_device, device);
+    vk_pipeline_layout = vk_malloc(sizeof(*vk_pipeline_layout), allocators,
+                                   VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+    if (NULL == vk_pipeline_layout) {
+        RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+    }
+
+    set_handles = alloca(sizeof(*set_handles) * create_info->setLayoutCount);
+    for (uint32_t i = 0; i < create_info->setLayoutCount; i++) {
+        vk_layout = FROM_HANDLE(vk_layout, create_info->pSetLayouts[i]);
+        set_handles[i] = vk_layout->identifier;
+    }
+
+    res = vtest_create_pipeline_layout(icd_state.io_fd,
+                                       vk_device->identifier,
+                                       create_info,
+                                       set_handles,
+                                       &vk_pipeline_layout->identifier);
+    if (res < 0) {
+        RETURN(VK_ERROR_DEVICE_LOST);
+    }
+
+    *pipeline_layout = TO_HANDLE(vk_pipeline_layout);
+    RETURN(VK_SUCCESS);
 }

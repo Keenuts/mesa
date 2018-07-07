@@ -112,5 +112,36 @@
             ]
          }
       }
+   },
+   {
+      "function": "vkCreatePipelineLayout",
+      "output": "VkPipelineLayout",
+      "id": "VCMD_VK_CREATE_PIPELINE_LAYOUT",
+
+      "chunks": {
+         "intro": {
+            "parent": null,
+            "content" : [
+               { "name": "flags" },
+               { "name" : "setLayoutCount" },
+               { "name" : "pushConstantRangeCount" }
+            ]
+         },
+         "pSetLayouts": {
+            "parent": "intro",
+            "count": "setLayoutCount",
+            "content" : [
+            ]
+         },
+         "pPushConstantRanges": {
+            "parent": "intro",
+            "count": "pushConstantRangeCount",
+            "content" : [
+               { "name" : "stageFlags" },
+               { "name" : "offset" },
+               { "name" : "size" }
+            ]
+         }
+      }
    }
 ]

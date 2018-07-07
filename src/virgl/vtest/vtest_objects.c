@@ -178,3 +178,48 @@ int vtest_create_descriptor_pool(int sock_fd,
    *output = result.result;
    RETURN(result.error_code);
 }
+
+int vtest_create_pipeline_layout(int sock_fd,
+    uint32_t handle,
+    const VkPipelineLayoutCreateInfo *create_info,
+    uint32_t *set_handles,
+    uint32_t  *output)
+{
+
+    int res;
+    struct vtest_result result;
+    struct vtest_hdr cmd;
+    struct payload_create_pipeline_layout_intro intro;
+    struct payload_create_pipeline_layout_pPushConstantRanges pPushConstantRanges;
+
+    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_PIPELINE_LAYOUT, sizeof(cmd));
+    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+    CHECK_IO_RESULT(res, sizeof(cmd));
+
+    intro.handle = handle;
+    intro.flags = create_info->flags;
+    intro.setLayoutCount = create_info->setLayoutCount;
+    intro.pushConstantRangeCount = create_info->pushConstantRangeCount;
+    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+    CHECK_IO_RESULT(res, sizeof(intro));
+
+    /* writing first array */
+    res = virgl_block_write(sock_fd, set_handles,
+                            sizeof(*set_handles) * create_info->setLayoutCount);
+    CHECK_IO_RESULT(res, sizeof(*set_handles) * create_info->setLayoutCount);
+
+    /* writting second array */
+    for (uint32_t i = 0; i < create_info->pushConstantRangeCount; i++) {
+        pPushConstantRanges.stageFlags = create_info->pPushConstantRanges[i].stageFlags;
+        pPushConstantRanges.offset = create_info->pPushConstantRanges[i].offset;
+        pPushConstantRanges.size = create_info->pPushConstantRanges[i].size;
+
+        res = virgl_block_write(sock_fd, &pPushConstantRanges, sizeof(pPushConstantRanges));
+        CHECK_IO_RESULT(res, sizeof(pPushConstantRanges));
+    }
+
+    res = virgl_block_read(sock_fd, &result, sizeof(result));
+    CHECK_IO_RESULT(res, sizeof(result));
+    *output = result.result;
+    RETURN(result.error_code);
+}

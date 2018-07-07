@@ -73,4 +73,8 @@ struct vk_shader_module {
    uint32_t identifier;
 };
 
+struct vk_pipeline_layout {
+    uint32_t identifier;
+};
+
 #endif

@@ -30,6 +30,12 @@ int vtest_create_descriptor_pool(int sock_fd,
    const VkDescriptorPoolCreateInfo *create_info,
    uint32_t  *output);
 
+int vtest_create_pipeline_layout(int sock_fd,
+    uint32_t handle,
+    const VkPipelineLayoutCreateInfo *create_info,
+    uint32_t *set_handles,
+    uint32_t  *output);
+
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -76,4 +82,17 @@ struct payload_create_descriptor_pool_intro {
 struct payload_create_descriptor_pool_pPoolSizes {
    uint32_t type;
    uint32_t descriptorCount;
+};
+
+struct payload_create_pipeline_layout_intro {
+   uint32_t handle;
+   uint32_t flags;
+   uint32_t setLayoutCount;
+   uint32_t pushConstantRangeCount;
+};
+
+struct payload_create_pipeline_layout_pPushConstantRanges {
+   uint32_t stageFlags;
+   uint32_t offset;
+   uint32_t size;
 };

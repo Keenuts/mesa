@@ -173,6 +173,8 @@ void vgl_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice handle,
     device = FROM_HANDLE(device, handle);
 
     memcpy(props, &device->memory_properties, sizeof(*props));
+
+    TRACE_OUT();
 }
 
 void

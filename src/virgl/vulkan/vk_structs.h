@@ -77,4 +77,8 @@ struct vk_pipeline_layout {
     uint32_t identifier;
 };
 
+struct vk_pipeline {
+    uint32_t identifier;
+};
+
 #endif

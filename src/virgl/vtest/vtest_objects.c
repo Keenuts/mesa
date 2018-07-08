@@ -223,3 +223,40 @@ int vtest_create_pipeline_layout(int sock_fd,
     *output = result.result;
     RETURN(result.error_code);
 }
+
+int vtest_create_compute_pipelines(int sock_fd,
+    uint32_t device_handle,
+    const VkComputePipelineCreateInfo *info,
+    uint32_t handles[2],
+    uint32_t  *output)
+{
+
+    int res;
+    struct vtest_result result;
+    struct vtest_hdr cmd;
+    struct payload_create_compute_pipelines_intro intro;
+
+    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_COMPUTE_PIPELINES, sizeof(cmd));
+    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+    CHECK_IO_RESULT(res, sizeof(cmd));
+
+    intro.handle = device_handle;
+    intro.flags = info->flags;
+    intro.layout = handles[0];
+
+    intro.stage_flags = info->stage.flags;
+    intro.stage_stage = info->stage.flags;
+    intro.stage_module = handles[1];
+    //FIXME: entrypoint can be UTF-8.
+    intro.entrypoint_len = strlen(info->stage.pName) + 1;
+    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+    CHECK_IO_RESULT(res, sizeof(intro));
+
+    res = virgl_block_write(sock_fd, info->stage.pName, intro.entrypoint_len);
+    CHECK_IO_RESULT(res, intro.entrypoint_len);
+
+    res = virgl_block_read(sock_fd, &result, sizeof(result));
+    CHECK_IO_RESULT(res, sizeof(result));
+    *output = result.result;
+    RETURN(result.error_code);
+}

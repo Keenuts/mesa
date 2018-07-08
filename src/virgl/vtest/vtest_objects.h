@@ -36,6 +36,12 @@ int vtest_create_pipeline_layout(int sock_fd,
     uint32_t *set_handles,
     uint32_t  *output);
 
+int vtest_create_compute_pipelines(int sock_fd,
+    uint32_t device_handle,
+    const VkComputePipelineCreateInfo *info,
+    uint32_t handles[2],
+    uint32_t  *output);
+
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -95,4 +101,14 @@ struct payload_create_pipeline_layout_pPushConstantRanges {
    uint32_t stageFlags;
    uint32_t offset;
    uint32_t size;
+};
+
+struct payload_create_compute_pipelines_intro {
+    uint32_t handle;
+    uint32_t flags;
+    uint32_t layout;
+    uint32_t stage_flags;
+    uint32_t stage_stage;
+    uint32_t stage_module;
+    uint32_t entrypoint_len;
 };

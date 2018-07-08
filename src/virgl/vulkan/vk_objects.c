@@ -216,3 +216,79 @@ vgl_vkCreatePipelineLayout(VkDevice device,
     *pipeline_layout = TO_HANDLE(vk_pipeline_layout);
     RETURN(VK_SUCCESS);
 }
+
+static VkResult create_compute_pipeline(const struct vk_device *vk_device,
+                                        const VkComputePipelineCreateInfo *info,
+                                        struct vk_pipeline *vk_pipeline)
+{
+    if (VK_PIPELINE_CREATE_DERIVATIVE_BIT & info->flags) {
+        fprintf(stderr, "derivative pipelines not supported yet.\n");
+        return VK_ERROR_FEATURE_NOT_PRESENT;
+    }
+
+    int res;
+    struct vk_pipeline_layout   *layout;
+    struct vk_shader_module     *shader_module;
+    uint32_t handles[2];
+
+    layout = FROM_HANDLE(layout, info->layout);
+    shader_module = FROM_HANDLE(shader_module, info->stage.module);
+
+    handles[0] = layout->identifier;
+    handles[1] = shader_module->identifier;
+
+    res = vtest_create_compute_pipelines(icd_state.io_fd,
+                                         vk_device->identifier,
+                                         info,
+                                         handles,
+                                         &vk_pipeline->identifier);
+    if (res < 0) {
+        return VK_ERROR_INITIALIZATION_FAILED;
+    }
+
+    return VK_SUCCESS;
+}
+
+VkResult
+vgl_vkCreateComputePipelines(VkDevice device,
+                             VkPipelineCache pipeline_cache,
+                             uint32_t create_info_count,
+                             const VkComputePipelineCreateInfo *create_info,
+                             const VkAllocationCallbacks *allocators,
+                             VkPipeline *pipeline)
+{
+    TRACE_IN();
+
+    VkResult res;
+    struct vk_device *vk_device = NULL;
+    struct vk_pipeline *vk_pipelines = NULL;
+
+    if (pipeline_cache != VK_NULL_HANDLE) {
+        fprintf(stderr, "pipeline cache not supported for now.\n");
+        RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+    }
+
+    vk_device = FROM_HANDLE(vk_device, device);
+    vk_pipelines = vk_malloc(sizeof(*vk_pipelines) * create_info_count,
+                             allocators,
+                             VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+
+    if (NULL == vk_pipelines) {
+        RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+    }
+
+    for (uint32_t i = 0; i < create_info_count; i++) {
+        res = create_compute_pipeline(vk_device,
+                                      create_info + i,
+                                      vk_pipelines + 1);
+        if (0 != res) {
+            free(vk_pipelines);
+            RETURN(res);
+        }
+    }
+
+    for (uint32_t i = 0; i < create_info_count; i++) {
+        pipeline[i] = TO_HANDLE(vk_pipelines + i);
+    }
+    RETURN(VK_SUCCESS);
+}

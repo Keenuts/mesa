@@ -38,6 +38,10 @@ int vtest_get_queue_family_properties(int sock_fd,
                                       uint32_t *family_count,
                                       VkQueueFamilyProperties **families);
 
+int vtest_get_device_memory_properties(int sock_fd,
+                                       int device_id,
+                                       VkPhysicalDeviceMemoryProperties *props);
+
 int vtest_create_device(int sock_fd,
                         uint32_t physical_device_id,
                         const VkDeviceCreateInfo *info,

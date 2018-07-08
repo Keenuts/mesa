@@ -18,7 +18,7 @@
 
 struct vk_physical_device_list {
    struct list list;
-   struct vk_physical_device vk_device;
+   struct vk_physical_device device;
 };
 
 struct icd_state {

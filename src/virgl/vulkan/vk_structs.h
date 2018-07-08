@@ -27,6 +27,9 @@ struct vk_physical_device
 
    uint32_t queue_family_count;
    VkQueueFamilyProperties *queue_family_properties;
+
+   /* All memory areas will e set as non-coherent */
+   VkPhysicalDeviceMemoryProperties memory_properties;
 };
 
 struct vk_queue {

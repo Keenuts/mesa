@@ -73,6 +73,7 @@ int vtest_get_queue_family_properties(int sock_fd,
    struct vtest_hdr cmd;
    struct vtest_payload_device_get payload;
    struct vtest_result result;
+   const uint32_t elt_size = sizeof(VkQueueFamilyProperties);
 
    TRACE_IN();
 
@@ -88,15 +89,44 @@ int vtest_get_queue_family_properties(int sock_fd,
    CHECK_IO_RESULT(res, sizeof(result));
    CHECK_VTEST_RESULT(result);
 
-   uint64_t size = sizeof(**families) * result.result;
    *family_count = result.result;
-   *families = malloc(size);
+   *families = malloc(elt_size * result.result);
    if (*families == NULL) {
       RETURN(-1);
    }
 
-   res = virgl_block_read(sock_fd, *families, size);
-   CHECK_IO_RESULT(res, size);
+   res = virgl_block_read(sock_fd, *families, elt_size * result.result);
+   CHECK_IO_RESULT(res, elt_size * result.result);
+
+   RETURN(0);
+}
+
+int vtest_get_device_memory_properties(int sock_fd,
+                                       int device_id,
+                                       VkPhysicalDeviceMemoryProperties *props)
+{
+   ssize_t res;
+   struct vtest_hdr cmd;
+   struct vtest_payload_device_get payload;
+   struct vtest_result result;
+
+   TRACE_IN();
+
+   INITIALIZE_HDR(cmd, VCMD_VK_GET_DEVICE_MEMORY, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_id = device_id;
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   CHECK_VTEST_RESULT(result);
+
+
+   res = virgl_block_read(sock_fd, props, sizeof(*props));
+   CHECK_IO_RESULT(res, sizeof(*props));
 
    RETURN(0);
 }

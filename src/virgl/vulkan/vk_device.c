@@ -9,6 +9,43 @@
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
 
+static int initialize_physical_device(struct vk_physical_device *device)
+{
+    TRACE_IN();
+    int res;
+
+    res = vtest_get_sparse_properties(icd_state.io_fd,
+                                      device->identifier,
+                                      &device->sparse_properties);
+    if (res < 0) {
+        RETURN(-1);
+    }
+
+
+    res = vtest_get_queue_family_properties(icd_state.io_fd,
+                                            device->identifier,
+                                            &device->queue_family_count,
+                                            &device->queue_family_properties);
+    if (res < 0) {
+        RETURN(-2);
+    }
+
+    res = vtest_get_device_memory_properties(icd_state.io_fd,
+                                             device->identifier,
+                                             &device->memory_properties);
+    if (res < 0) {
+        RETURN(-3);
+    }
+
+    /* To avoid unecessary copies, we force the app to explicitly mark memory updates */
+    for (uint32_t i = 0; i < device->memory_properties.memoryTypeCount; i++) {
+        device->memory_properties.memoryTypes[i].propertyFlags &=
+            ~VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    }
+
+    RETURN(0);
+}
+
 int
 initialize_physical_devices(void)
 {
@@ -25,34 +62,21 @@ initialize_physical_devices(void)
    }
 
    for (uint32_t i = 0; i < device_count; i++) {
-      struct vk_physical_device_list *dev = NULL;
+      struct vk_physical_device_list *node = NULL;
 
-      dev = malloc(sizeof(*dev));
-      if (dev == NULL) {
+      node = malloc(sizeof(*node));
+      if (node == NULL) {
          RETURN(-2);
       }
 
-      list_init(&dev->list);
-      dev->vk_device.identifier = i;
+      list_init(&node->list);
+      node->device.identifier = i;
 
-      res = vtest_get_sparse_properties(icd_state.io_fd,
-                                        i,
-                                        &dev->vk_device.sparse_properties);
-      if (res < 0) {
-         free(dev);
-         RETURN(-1);
+      if (initialize_physical_device(&node->device) != 0) {
+          free(node);
+          continue;
       }
-
-      res = vtest_get_queue_family_properties(icd_state.io_fd,
-                                              i,
-                                              &dev->vk_device.queue_family_count,
-                                              &dev->vk_device.queue_family_properties);
-      if (res < 0) {
-         free(dev);
-         RETURN(-1);
-      }
-
-      list_append(&icd_state.physical_devices.list, &dev->list);
+      list_append(&icd_state.physical_devices.list, &node->list);
    }
 
    RETURN(0);
@@ -133,11 +157,22 @@ vgl_vkEnumeratePhysicalDevices(VkInstance instance,
    }
 
    LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
-      *physical_devices = TO_HANDLE(&it->vk_device);
+      *physical_devices = TO_HANDLE(&it->device);
       physical_devices++;
    }
 
    RETURN(VK_SUCCESS);
+}
+
+void vgl_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice handle,
+                                             VkPhysicalDeviceMemoryProperties *props)
+{
+    struct vk_physical_device *device = NULL;
+
+    TRACE_IN();
+    device = FROM_HANDLE(device, handle);
+
+    memcpy(props, &device->memory_properties, sizeof(*props));
 }
 
 void

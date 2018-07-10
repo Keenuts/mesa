@@ -344,3 +344,50 @@ vgl_vkCreateBuffer(VkDevice device,
 
    RETURN(VK_SUCCESS);
 }
+
+VkResult
+vgl_vkBindBufferMemory(VkDevice device,
+                       VkBuffer buffer,
+                       VkDeviceMemory memory,
+                       VkDeviceSize offset)
+{
+   TRACE_IN();
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_buffer *vk_buffer = NULL;
+   struct vk_device_memory *vk_memory = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+   vk_buffer = FROM_HANDLE(vk_buffer, buffer);
+   vk_memory = FROM_HANDLE(vk_memory, memory);
+
+   if (vk_buffer->flags & (VK_BUFFER_CREATE_SPARSE_BINDING_BIT |
+                           VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT |
+                           VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
+
+   if (offset > vk_memory->size
+     || vk_buffer->size > vk_memory->size - offset
+     || NULL != vk_buffer->binding) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
+
+   if (((vk_buffer->flags & VK_BUFFER_CREATE_PROTECTED_BIT) == 0)
+       != ((vk_memory->flags & VK_MEMORY_PROPERTY_PROTECTED_BIT) == 0)) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
+
+   res = vtest_bind_buffer_memory(icd_state.io_fd,
+                                  vk_device->identifier,
+                                  vk_buffer->identifier,
+                                  vk_memory->identifier,
+                                  offset);
+   if (0 > res) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
+
+   vk_buffer->binding = vk_memory;
+   vk_buffer->offset = offset;
+   RETURN(VK_SUCCESS);
+}

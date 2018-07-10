@@ -48,6 +48,12 @@ int vtest_allocate_memory(int sock_fd,
                           VkDeviceSize size,
                           uint32_t *handle);
 
+int vtest_bind_buffer_memory(int sock_fd,
+                             uint32_t device_handle,
+                             uint32_t buffer_handle,
+                             uint32_t memory_handle,
+                             uint32_t offset);
+
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -123,4 +129,11 @@ struct payload_allocate_memory {
     uint32_t handle;
     uint32_t memory_index;
     uint64_t device_size;
+};
+
+struct payload_bind_buffer_memory {
+   uint32_t device_handle;
+   uint32_t buffer_handle;
+   uint32_t memory_handle;
+   uint32_t offset;
 };

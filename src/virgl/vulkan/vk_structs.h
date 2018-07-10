@@ -54,6 +54,7 @@ struct vk_command_pool
 struct vk_device
 {
    VK_LOADER_DATA loader_data;
+   struct vk_physical_device *physical_device;
    uint32_t identifier;
    uint32_t device_lost;
 
@@ -67,11 +68,6 @@ struct vk_descriptor_set_layout {
    uint32_t identifier;
 };
 
-struct vk_buffer {
-   VK_LOADER_DATA loader_data;
-   uint32_t identifier;
-};
-
 struct vk_shader_module {
    uint32_t identifier;
 };
@@ -82,6 +78,25 @@ struct vk_pipeline_layout {
 
 struct vk_pipeline {
     uint32_t identifier;
+};
+
+struct vk_device_memory {
+   uint32_t identifier;
+   uint32_t memory_index;
+   VkDeviceSize size;
+   VkMemoryPropertyFlags flags;
+};
+
+struct vk_buffer {
+   uint32_t identifier;
+   uint64_t size;
+   uint64_t usage;
+   VkBufferCreateFlagBits flags;
+
+   struct vk_device_memory *binding;
+   uint64_t offset;
+   uint32_t mappable;
+   void *ptr;
 };
 
 #endif

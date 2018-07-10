@@ -256,6 +256,20 @@ vgl_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice device,
    RETURN(VK_SUCCESS);
 }
 
+static struct vk_physical_device*
+get_physical_device_per_id(uint32_t device_id)
+{
+   struct vk_physical_device_list *it = NULL;
+
+   LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
+      if (0 == device_id) {
+         return &it->device;
+      }
+   }
+
+   return NULL;
+}
+
 static int
 initialize_vk_device(uint32_t physical_device_id,
                      const VkDeviceCreateInfo *info,
@@ -272,6 +286,7 @@ initialize_vk_device(uint32_t physical_device_id,
    }
 
    dev->identifier = device_id;
+   dev->physical_device = get_physical_device_per_id(physical_device_id);
    dev->device_lost = 0;
 
    queue_count = 0;

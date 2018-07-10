@@ -20,5 +20,6 @@
     "vkGetPhysicalDeviceProperties",
     "vkGetPhysicalDeviceQueueFamilyProperties",
     "vkCreateComputePipelines",
+    "vkAllocateMemory",
     ""
 ]

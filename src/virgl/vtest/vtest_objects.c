@@ -44,36 +44,6 @@ int vtest_create_descriptor_set_layout(int sock_fd,
 }
 
 
-int vtest_create_buffer(int sock_fd,
-   uint32_t handle,
-   const VkBufferCreateInfo *create_info,
-   uint32_t  *output)
-{
-
-   ssize_t res;
-   struct vtest_result result;
-   struct vtest_hdr cmd;
-   struct payload_create_buffer_intro intro;
-
-   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_BUFFER, sizeof(cmd));
-   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
-   CHECK_IO_RESULT(res, sizeof(cmd));
-
-   intro.handle = handle;
-   intro.flags = create_info->flags;
-   intro.size = create_info->size;
-   intro.usage = create_info->usage;
-   intro.sharingMode = create_info->sharingMode;
-   intro.queueFamilyIndexCount = create_info->queueFamilyIndexCount;
-   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
-   CHECK_IO_RESULT(res, sizeof(intro));
-
-   res = virgl_block_read(sock_fd, &result, sizeof(result));
-   CHECK_IO_RESULT(res, sizeof(result));
-   *output = result.result;
-   RETURN(result.error_code);
-}
-
 int vtest_allocate_descriptor_sets(int sock_fd,
    uint32_t handle,
    uint32_t pool_handle,
@@ -185,43 +155,44 @@ int vtest_create_pipeline_layout(int sock_fd,
     uint32_t *set_handles,
     uint32_t  *output)
 {
+   TRACE_IN();
 
-    int res;
-    struct vtest_result result;
-    struct vtest_hdr cmd;
-    struct payload_create_pipeline_layout_intro intro;
-    struct payload_create_pipeline_layout_pPushConstantRanges pPushConstantRanges;
+   int res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_create_pipeline_layout_intro intro;
+   struct payload_create_pipeline_layout_pPushConstantRanges pPushConstantRanges;
 
-    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_PIPELINE_LAYOUT, sizeof(cmd));
-    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
-    CHECK_IO_RESULT(res, sizeof(cmd));
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_PIPELINE_LAYOUT, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
 
-    intro.handle = handle;
-    intro.flags = create_info->flags;
-    intro.setLayoutCount = create_info->setLayoutCount;
-    intro.pushConstantRangeCount = create_info->pushConstantRangeCount;
-    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
-    CHECK_IO_RESULT(res, sizeof(intro));
+   intro.handle = handle;
+   intro.flags = create_info->flags;
+   intro.setLayoutCount = create_info->setLayoutCount;
+   intro.pushConstantRangeCount = create_info->pushConstantRangeCount;
+   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+   CHECK_IO_RESULT(res, sizeof(intro));
 
-    /* writing first array */
-    res = virgl_block_write(sock_fd, set_handles,
-                            sizeof(*set_handles) * create_info->setLayoutCount);
-    CHECK_IO_RESULT(res, sizeof(*set_handles) * create_info->setLayoutCount);
+   /* writing first array */
+   res = virgl_block_write(sock_fd, set_handles,
+         sizeof(*set_handles) * create_info->setLayoutCount);
+   CHECK_IO_RESULT(res, sizeof(*set_handles) * create_info->setLayoutCount);
 
-    /* writting second array */
-    for (uint32_t i = 0; i < create_info->pushConstantRangeCount; i++) {
-        pPushConstantRanges.stageFlags = create_info->pPushConstantRanges[i].stageFlags;
-        pPushConstantRanges.offset = create_info->pPushConstantRanges[i].offset;
-        pPushConstantRanges.size = create_info->pPushConstantRanges[i].size;
+   /* writting second array */
+   for (uint32_t i = 0; i < create_info->pushConstantRangeCount; i++) {
+      pPushConstantRanges.stageFlags = create_info->pPushConstantRanges[i].stageFlags;
+      pPushConstantRanges.offset = create_info->pPushConstantRanges[i].offset;
+      pPushConstantRanges.size = create_info->pPushConstantRanges[i].size;
 
-        res = virgl_block_write(sock_fd, &pPushConstantRanges, sizeof(pPushConstantRanges));
-        CHECK_IO_RESULT(res, sizeof(pPushConstantRanges));
-    }
+      res = virgl_block_write(sock_fd, &pPushConstantRanges, sizeof(pPushConstantRanges));
+      CHECK_IO_RESULT(res, sizeof(pPushConstantRanges));
+   }
 
-    res = virgl_block_read(sock_fd, &result, sizeof(result));
-    CHECK_IO_RESULT(res, sizeof(result));
-    *output = result.result;
-    RETURN(result.error_code);
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   *output = result.result;
+   RETURN(result.error_code);
 }
 
 int vtest_create_compute_pipelines(int sock_fd,
@@ -230,33 +201,102 @@ int vtest_create_compute_pipelines(int sock_fd,
     uint32_t handles[2],
     uint32_t  *output)
 {
+   TRACE_IN();
 
-    int res;
-    struct vtest_result result;
-    struct vtest_hdr cmd;
-    struct payload_create_compute_pipelines_intro intro;
+   int res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_create_compute_pipelines_intro intro;
 
-    INITIALIZE_HDR(cmd, VCMD_VK_CREATE_COMPUTE_PIPELINES, sizeof(cmd));
-    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
-    CHECK_IO_RESULT(res, sizeof(cmd));
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_COMPUTE_PIPELINES, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
 
-    intro.handle = device_handle;
-    intro.flags = info->flags;
-    intro.layout = handles[0];
+   intro.handle = device_handle;
+   intro.flags = info->flags;
+   intro.layout = handles[0];
 
-    intro.stage_flags = info->stage.flags;
-    intro.stage_stage = info->stage.flags;
-    intro.stage_module = handles[1];
-    //FIXME: entrypoint can be UTF-8.
-    intro.entrypoint_len = strlen(info->stage.pName) + 1;
-    res = virgl_block_write(sock_fd, &intro, sizeof(intro));
-    CHECK_IO_RESULT(res, sizeof(intro));
+   intro.stage_flags = info->stage.flags;
+   intro.stage_stage = info->stage.flags;
+   intro.stage_module = handles[1];
+   //FIXME: entrypoint can be UTF-8.
+   intro.entrypoint_len = strlen(info->stage.pName) + 1;
+   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+   CHECK_IO_RESULT(res, sizeof(intro));
 
-    res = virgl_block_write(sock_fd, info->stage.pName, intro.entrypoint_len);
-    CHECK_IO_RESULT(res, intro.entrypoint_len);
+   res = virgl_block_write(sock_fd, info->stage.pName, intro.entrypoint_len);
+   CHECK_IO_RESULT(res, intro.entrypoint_len);
 
-    res = virgl_block_read(sock_fd, &result, sizeof(result));
-    CHECK_IO_RESULT(res, sizeof(result));
-    *output = result.result;
-    RETURN(result.error_code);
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   *output = result.result;
+   RETURN(result.error_code);
+}
+
+int vtest_allocate_memory(int sock_fd,
+                          uint32_t device_handle,
+                          uint32_t memory_index,
+                          VkDeviceSize size,
+                          uint32_t *handle)
+{
+   int res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_allocate_memory intro;
+
+   TRACE_IN();
+   INITIALIZE_HDR(cmd, VCMD_VK_ALLOCATE_MEMORY, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   intro.handle = device_handle;
+   intro.memory_index = memory_index;
+   intro.device_size = size;
+
+   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+   CHECK_IO_RESULT(res, sizeof(intro));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   *handle = result.result;
+
+   RETURN(result.error_code);
+}
+
+int vtest_create_buffer(int sock_fd,
+                        uint32_t handle,
+                        const VkBufferCreateInfo *create_info,
+                        uint32_t  *output)
+{
+   ssize_t res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_create_buffer_intro intro;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_BUFFER, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   intro.handle = handle;
+   intro.flags = create_info->flags;
+   intro.size = create_info->size;
+   intro.usage = create_info->usage;
+   intro.sharingMode = create_info->sharingMode;
+   intro.queueFamilyIndexCount = create_info->queueFamilyIndexCount;
+
+   res = virgl_block_write(sock_fd, &intro, sizeof(intro));
+   CHECK_IO_RESULT(res, sizeof(intro));
+
+   if (0 != intro.queueFamilyIndexCount) {
+      res = virgl_block_write(sock_fd,
+                              create_info->pQueueFamilyIndices,
+                              sizeof(uint32_t) * intro.queueFamilyIndexCount);
+      CHECK_IO_RESULT(res, sizeof(uint32_t) * intro.queueFamilyIndexCount);
+   }
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   *output = result.result;
+   RETURN(result.error_code);
 }

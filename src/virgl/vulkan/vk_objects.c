@@ -1,3 +1,4 @@
+#include <string.h>
 #include <vulkan/vulkan.h>
 
 #include "common/macros.h"
@@ -111,39 +112,6 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
       vk_handles[i] = TO_HANDLE((uintptr_t)handles[i]);
    }
-
-   RETURN(VK_SUCCESS);
-}
-
-VkResult
-vgl_vkCreateBuffer(VkDevice device,
-                   const VkBufferCreateInfo *info,
-                   const VkAllocationCallbacks *allocators,
-                   VkBuffer *buffer)
-{
-   TRACE_IN();
-
-   int res;
-   struct vk_device *vk_device = NULL;
-   struct vk_buffer *vk_buffer = NULL;
-
-   vk_device = FROM_HANDLE(vk_device, device);
-   vk_buffer = vk_malloc(sizeof(*vk_buffer), allocators,
-                         VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
-
-   if (NULL == vk_buffer) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
-   }
-
-   res = vtest_create_buffer(icd_state.io_fd,
-                             vk_device->identifier,
-                             info,
-                             &vk_buffer->identifier);
-   if (res < 0) {
-      RETURN(VK_ERROR_DEVICE_LOST);
-   }
-
-   *buffer = TO_HANDLE(vk_buffer);
 
    RETURN(VK_SUCCESS);
 }
@@ -291,4 +259,88 @@ vgl_vkCreateComputePipelines(VkDevice device,
         pipeline[i] = TO_HANDLE(vk_pipelines + i);
     }
     RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkAllocateMemory(VkDevice device,
+                     const VkMemoryAllocateInfo *info,
+                     const VkAllocationCallbacks *allocators,
+                     VkDeviceMemory *output)
+{
+   TRACE_IN();
+
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_device_memory *vk_memory = NULL;
+   struct vk_physical_device *phys_device = NULL;
+   VkMemoryType mem_type;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+   phys_device = vk_device->physical_device;
+
+   if (info->memoryTypeIndex >= phys_device->memory_properties.memoryTypeCount) {
+      RETURN(VK_ERROR_INVALID_EXTERNAL_HANDLE);
+   }
+
+   vk_memory = vk_malloc(sizeof(*vk_memory),
+                         allocators,
+                         VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (NULL == vk_memory) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   res = vtest_allocate_memory(icd_state.io_fd,
+                               vk_device->identifier,
+                               info->memoryTypeIndex,
+                               info->allocationSize,
+                               &vk_memory->identifier);
+   if (0 > res) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   mem_type = phys_device->memory_properties.memoryTypes[info->memoryTypeIndex];
+   vk_memory->memory_index = info->memoryTypeIndex;
+   vk_memory->size = info->allocationSize;
+   vk_memory->flags = mem_type.propertyFlags;
+
+   *output = TO_HANDLE(vk_memory);
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkCreateBuffer(VkDevice device,
+                   const VkBufferCreateInfo *info,
+                   const VkAllocationCallbacks *allocators,
+                   VkBuffer *buffer)
+{
+   TRACE_IN();
+
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_buffer *vk_buffer = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+   vk_buffer = vk_malloc(sizeof(*vk_buffer), allocators,
+                         VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+
+   if (NULL == vk_buffer) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   memset(vk_buffer, 0, sizeof(*vk_buffer));
+   res = vtest_create_buffer(icd_state.io_fd,
+                             vk_device->identifier,
+                             info,
+                             &vk_buffer->identifier);
+   if (0 > res) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   vk_buffer->size = info->size;
+   vk_buffer->usage = info->usage;
+   vk_buffer->flags = info->flags;
+
+   *buffer = TO_HANDLE(vk_buffer);
+
+   RETURN(VK_SUCCESS);
 }

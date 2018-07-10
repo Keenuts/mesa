@@ -42,6 +42,12 @@ int vtest_create_compute_pipelines(int sock_fd,
     uint32_t handles[2],
     uint32_t  *output);
 
+int vtest_allocate_memory(int sock_fd,
+                          uint32_t device_handle,
+                          uint32_t memory_index,
+                          VkDeviceSize size,
+                          uint32_t *handle);
+
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -111,4 +117,10 @@ struct payload_create_compute_pipelines_intro {
     uint32_t stage_stage;
     uint32_t stage_module;
     uint32_t entrypoint_len;
+};
+
+struct payload_allocate_memory {
+    uint32_t handle;
+    uint32_t memory_index;
+    uint64_t device_size;
 };

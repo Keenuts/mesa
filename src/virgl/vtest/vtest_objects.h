@@ -135,5 +135,5 @@ struct payload_bind_buffer_memory {
    uint32_t device_handle;
    uint32_t buffer_handle;
    uint32_t memory_handle;
-   uint32_t offset;
+   uint64_t offset;
 };

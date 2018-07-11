@@ -217,7 +217,7 @@ int vtest_create_compute_pipelines(int sock_fd,
    intro.layout = handles[0];
 
    intro.stage_flags = info->stage.flags;
-   intro.stage_stage = info->stage.flags;
+   intro.stage_stage = info->stage.stage;
    intro.stage_module = handles[1];
    //FIXME: entrypoint can be UTF-8.
    intro.entrypoint_len = strlen(info->stage.pName) + 1;

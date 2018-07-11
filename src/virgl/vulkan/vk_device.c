@@ -407,3 +407,63 @@ vgl_vkCreateCommandPool(VkDevice device,
    *pool = TO_HANDLE(&dev->command_pool);
    RETURN(VK_SUCCESS);
 }
+
+VkResult
+vgl_vkMapMemory(VkDevice device,
+                VkDeviceMemory memory,
+                VkDeviceSize offset,
+                VkDeviceSize size,
+                VkMemoryMapFlags flags,
+                void **ptr)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(flags);
+
+   struct vk_device_memory *vk_memory = NULL;
+
+   vk_memory = FROM_HANDLE(vk_memory, memory);
+
+   vk_memory->map_size = size;
+   vk_memory->map_offset = offset;
+   vk_memory->ptr = malloc(size);
+   if (NULL == ptr) {
+      RETURN(VK_ERROR_MEMORY_MAP_FAILED);
+   }
+
+   *ptr = vk_memory->ptr;
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkFlushMappedMemoryRanges(VkDevice device,
+                              uint32_t range_count,
+                              const VkMappedMemoryRange *ranges)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(range_count);
+   UNUSED_PARAMETER(ranges);
+
+   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+}
+
+void
+vgl_vkUnmapMemory(VkDevice device,
+                  VkDeviceMemory memory)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+
+   struct vk_device_memory *vk_memory = NULL;
+
+
+   vk_memory = FROM_HANDLE(vk_memory, memory);
+   free(vk_memory->ptr);
+   vk_memory->ptr = NULL;
+
+   RETURN();
+}

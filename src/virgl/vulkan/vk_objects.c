@@ -291,7 +291,7 @@ vgl_vkAllocateMemory(VkDevice device,
       RETURN(VK_ERROR_INVALID_EXTERNAL_HANDLE);
    }
 
-   vk_memory = vk_malloc(sizeof(*vk_memory),
+   vk_memory = vk_calloc(sizeof(*vk_memory),
                          allocators,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_memory) {
@@ -417,7 +417,9 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
    struct vk_buffer *vk_buffer = NULL;
    uint32_t *buffer_handles = NULL;
 
-   /* Usage check */
+   /* Usage check
+    * For now only one specific case is supported
+    */
    if (0 != copy_count) {
       fprintf(stderr, "descriptor copy not implemented for now\n");
       RETURN();
@@ -455,38 +457,4 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
 
    UNUSED_PARAMETER(copy_info);
    RETURN();
-}
-
-VkResult
-vgl_vkMapMemory(VkDevice device,
-                VkDeviceMemory memory,
-                VkDeviceSize offset,
-                VkDeviceSize size,
-                VkMemoryMapFlags flags,
-                void **ptr)
-{
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(memory);
-   UNUSED_PARAMETER(offset);
-   UNUSED_PARAMETER(size);
-   UNUSED_PARAMETER(flags);
-   UNUSED_PARAMETER(ptr);
-
-   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
-}
-
-VkResult
-vgl_vkFlushMappedMemoryRanges(VkDevice device,
-                              uint32_t range_count,
-                              const VkMappedMemoryRange *ranges)
-{
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(range_count);
-   UNUSED_PARAMETER(ranges);
-
-   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
 }

@@ -24,6 +24,7 @@
     "vkBindBufferMemory",
     "vkUpdateDescriptorSets",
     "vkMapMemory",
+    "vkUnmapMemory",
     "vkFlushMappedMemoryRanges",
     ""
 ]

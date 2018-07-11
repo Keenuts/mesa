@@ -89,6 +89,10 @@ struct vk_device_memory {
    uint32_t memory_index;
    VkDeviceSize size;
    VkMemoryPropertyFlags flags;
+
+   uint64_t map_offset;
+   uint64_t map_size;
+   void *ptr;
 };
 
 struct vk_buffer {
@@ -99,8 +103,6 @@ struct vk_buffer {
 
    struct vk_device_memory *binding;
    uint64_t offset;
-   uint32_t mappable;
-   void *ptr;
 };
 
 #endif

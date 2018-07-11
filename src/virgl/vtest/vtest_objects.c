@@ -330,3 +330,44 @@ int vtest_bind_buffer_memory(int sock_fd,
    RETURN(result.error_code);
 }
 
+int vtest_write_descriptor_set(uint32_t sock_fd,
+                               uint32_t device_handle,
+                               uint32_t dst_set_handle,
+                               uint32_t *buffer_handles,
+                               const VkWriteDescriptorSet *info)
+{
+   int res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_write_descriptor_set payload;
+   struct payload_write_descriptor_set_buffer buffer_info;
+
+   TRACE_IN();
+
+   INITIALIZE_HDR(cmd, VCMD_VK_WRITE_DESCRIPTOR_SET, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_handle = device_handle;
+   payload.dst_set = dst_set_handle;
+   payload.dst_binding = info->dstBinding;
+   payload.dst_array_element = info->dstArrayElement;
+   payload.descriptor_type = info->descriptorType;
+   payload.descriptor_count = info->descriptorCount;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   for (uint32_t i = 0; i < info->descriptorCount; i++) {
+      buffer_info.buffer_handle = buffer_handles[i];
+      buffer_info.offset = info->pBufferInfo[i].offset;
+      buffer_info.range = info->pBufferInfo[i].range;
+
+      res = virgl_block_write(sock_fd, &buffer_info, sizeof(buffer_info));
+      CHECK_IO_RESULT(res, sizeof(buffer_info));
+   }
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   RETURN(result.error_code);
+}

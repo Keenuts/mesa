@@ -54,6 +54,12 @@ int vtest_bind_buffer_memory(int sock_fd,
                              uint32_t memory_handle,
                              uint32_t offset);
 
+int vtest_write_descriptor_set(uint32_t sock_fd,
+                               uint32_t device_handle,
+                               uint32_t dst_set_handle,
+                               uint32_t *buffer_handles,
+                               const VkWriteDescriptorSet *info);
+
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -136,4 +142,19 @@ struct payload_bind_buffer_memory {
    uint32_t buffer_handle;
    uint32_t memory_handle;
    uint64_t offset;
+};
+
+struct payload_write_descriptor_set {
+   uint32_t device_handle;
+   uint32_t dst_set;
+   uint32_t dst_binding;
+   uint32_t dst_array_element;
+   uint32_t descriptor_type;
+   uint32_t descriptor_count;
+};
+
+struct payload_write_descriptor_set_buffer {
+   uint32_t buffer_handle;
+   uint64_t offset;
+   uint64_t range;
 };

@@ -68,6 +68,10 @@ struct vk_descriptor_set_layout {
    uint32_t identifier;
 };
 
+struct vk_descriptor_set {
+   uint32_t identifier;
+};
+
 struct vk_shader_module {
    uint32_t identifier;
 };

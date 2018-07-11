@@ -73,15 +73,17 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
 
 VkResult
 vgl_vkAllocateDescriptorSets(VkDevice device,
-                         const VkDescriptorSetAllocateInfo *info,
-                         VkDescriptorSet *vk_handles)
+                             const VkDescriptorSetAllocateInfo *info,
+                             VkDescriptorSet *vk_handles)
 {
    TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_descriptor_pool *vk_pool = NULL;
-   uint32_t *handles = NULL;
+   struct vk_descriptor_set *vk_sets = NULL;
+   uint32_t *layout_handles = NULL;
+   uint32_t *output_handles = NULL;
 
    if (0 == info->descriptorSetCount) {
       RETURN(VK_SUCCESS);
@@ -90,27 +92,34 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    vk_device = FROM_HANDLE(vk_device, device);
    vk_pool = FROM_HANDLE(vk_pool, info->descriptorPool);
 
+   vk_sets = malloc(sizeof(*vk_sets) * info->descriptorSetCount);
+   if (NULL == vk_sets) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   layout_handles = alloca(sizeof(uint32_t) * info->descriptorSetCount);
+   output_handles = alloca(sizeof(uint32_t) * info->descriptorSetCount);
+
    /* Converting VK handles to VGL handles */
-   handles = alloca(sizeof(*handles) * info->descriptorSetCount);
    for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
       struct vk_descriptor_set_layout *layout = NULL;
-
       layout = FROM_HANDLE(layout, info->pSetLayouts[i]);
-      handles[i] = layout->identifier;
+      layout_handles[i] = layout->identifier;
    }
 
    res = vtest_allocate_descriptor_sets(icd_state.io_fd,
                                         vk_device->identifier,
                                         vk_pool->identifier,
                                         info,
-                                        handles,
-                                        handles);
+                                        layout_handles,
+                                        output_handles);
    if (0 > res) {
       RETURN(VK_ERROR_DEVICE_LOST);
    }
 
    for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
-      vk_handles[i] = TO_HANDLE((uintptr_t)handles[i]);
+      vk_sets[i].identifier = output_handles[i];
+      vk_handles[i] = TO_HANDLE(vk_sets + i);
    }
 
    RETURN(VK_SUCCESS);
@@ -401,12 +410,50 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
 {
    TRACE_IN();
 
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(write_count);
-   UNUSED_PARAMETER(write_info);
-   UNUSED_PARAMETER(copy_count);
-   UNUSED_PARAMETER(copy_info);
+   int res;
+   struct vk_device *vk_device = NULL;
 
+   struct vk_descriptor_set *descriptor = NULL;
+   struct vk_buffer *vk_buffer = NULL;
+   uint32_t *buffer_handles = NULL;
+
+   /* Usage check */
+   if (0 != copy_count) {
+      fprintf(stderr, "descriptor copy not implemented for now\n");
+      RETURN();
+   }
+
+   for (uint32_t i = 0; i < write_count; i++) {
+      if (write_info[i].descriptorType & ~VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
+         fprintf(stderr, "Only VK_DESCRIPTOR_TYPE_STORAGE_BUFFER are supported\n");
+         RETURN();
+      }
+   }
+
+   /* splitting into simple sub-commands */
+   vk_device = FROM_HANDLE(vk_device, device);
+   for (uint32_t i = 0; i < write_count; i++) {
+      descriptor = FROM_HANDLE(descriptor, write_info[i].dstSet);
+
+      buffer_handles = alloca(sizeof(uint32_t) * write_info[i].descriptorCount);
+      for (uint32_t j = 0; j < write_info[i].descriptorCount; j++) {
+         vk_buffer = FROM_HANDLE(vk_buffer, write_info[i].pBufferInfo[j].buffer);
+         buffer_handles[j] = vk_buffer->identifier;
+      }
+
+      res = vtest_write_descriptor_set(icd_state.io_fd,
+                                       vk_device->identifier,
+                                       descriptor->identifier,
+                                       buffer_handles,
+                                       write_info + i);
+      if (0 > res) {
+         fprintf(stderr, "vtest_update_descriptor_sets failed (%d)\n", res);
+         // One might fail, but we will still send the others
+         continue;
+      }
+   }
+
+   UNUSED_PARAMETER(copy_info);
    RETURN();
 }
 

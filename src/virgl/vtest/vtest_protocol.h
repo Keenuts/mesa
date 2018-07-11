@@ -69,6 +69,8 @@
 #define VCMD_VK_ALLOCATE_MEMORY 21
 #define VCMD_VK_BIND_BUFFER_MEMORY 22
 #define VCMD_VK_WRITE_DESCRIPTOR_SET 23
+#define VCMD_VK_READ_MEMORY 24
+#define VCMD_VK_WRITE_MEMORY 25
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -138,29 +140,11 @@ struct vtest_payload_device_create {
    uint32_t queue_info_count;
 };
 
-struct vtest_payload_descriptor_set_layout_bindings {
-   uint32_t binding;
-   uint32_t descriptor_type;
-   uint32_t descriptor_count;
-   uint32_t stage_flags;
-   /* uint32_t sampler_ids[]; */
-};
-
-struct vtest_payload_descriptor_set_layout {
-   uint32_t device_id;
-   uint32_t flags;
-   uint32_t binding_count;
-   /* struct vtest_payload_descriptor_set_layout_bindings[]; */
-};
-
-struct vtest_payload_create_buffer {
-   uint32_t device_id;
-   uint32_t flags;
-   uint64_t device_size;
-   uint32_t usage_flags;
-   uint32_t sharing_mode;
-   uint32_t queue_family_index_count;
-   /* uint32_t queue_indices[]; */
+struct vtest_payload_rw_memory {
+   uint32_t device_handle;
+   uint32_t memory_handle;
+   uint64_t offset;
+   uint64_t size;
 };
 
 #endif

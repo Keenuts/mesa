@@ -26,5 +26,6 @@
     "vkMapMemory",
     "vkUnmapMemory",
     "vkFlushMappedMemoryRanges",
+    "vkInvalidateMappedMemoryRanges",
     ""
 ]

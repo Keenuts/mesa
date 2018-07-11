@@ -50,4 +50,18 @@ int vtest_get_device_queues(int sock_fd,
                             uint32_t device_id,
                             uint32_t *queue_count,
                             struct vk_queue **queues);
+
+int vtest_read_memory(uint32_t sock_fd,
+                      uint32_t device_handle,
+                      uint32_t memory_handle,
+                      uint64_t offset,
+                      uint64_t size,
+                      void *ptr);
+
+int vtest_write_memory(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t memory_handle,
+                       uint64_t offset,
+                       uint64_t size,
+                       void *ptr);
 #endif

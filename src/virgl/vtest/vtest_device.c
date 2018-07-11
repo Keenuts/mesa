@@ -198,3 +198,74 @@ int vtest_create_device(int sock_fd,
    *id = result.result;
    RETURN(result.result);
 }
+
+int vtest_read_memory(uint32_t sock_fd,
+                      uint32_t device_handle,
+                      uint32_t memory_handle,
+                      uint64_t offset,
+                      uint64_t size,
+                      void *ptr)
+{
+   TRACE_IN();
+
+   int res;
+   struct vtest_hdr cmd;
+   struct vtest_result result;
+   struct vtest_payload_rw_memory payload;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_READ_MEMORY, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+
+   payload.device_handle = device_handle;
+   payload.memory_handle = memory_handle;
+   payload.offset = offset;
+   payload.size = size;
+
+   res=virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   res=virgl_block_read(sock_fd, (char*)ptr + offset, size);
+   CHECK_IO_RESULT(res, size);
+
+   RETURN(0);
+}
+
+int vtest_write_memory(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t memory_handle,
+                       uint64_t offset,
+                       uint64_t size,
+                       void *ptr)
+{
+   TRACE_IN();
+
+   int res;
+   struct vtest_hdr cmd;
+   struct vtest_result result;
+   struct vtest_payload_rw_memory payload;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_WRITE_MEMORY, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+
+   payload.device_handle = device_handle;
+   payload.memory_handle = memory_handle;
+   payload.offset = offset;
+   payload.size = size;
+
+   res=virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res=virgl_block_write(sock_fd, (char*)ptr + offset, size);
+   CHECK_IO_RESULT(res, size);
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   RETURN(result.result);
+   RETURN(0);
+}

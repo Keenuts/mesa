@@ -443,11 +443,57 @@ vgl_vkFlushMappedMemoryRanges(VkDevice device,
 {
    TRACE_IN();
 
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(range_count);
-   UNUSED_PARAMETER(ranges);
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_device_memory *vk_memory = NULL;
 
-   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   for (uint32_t i = 0; i < range_count; i++) {
+      vk_memory = FROM_HANDLE(vk_memory, ranges[i].memory);
+      res = vtest_write_memory(icd_state.io_fd,
+                               vk_device->identifier,
+                               vk_memory->identifier,
+                               ranges[i].offset,
+                               ranges[i].size,
+                               vk_memory->ptr);
+      if (0 > res) {
+         fprintf(stderr, "unable to flush a mapped memory range (%d)\n", -res);
+      }
+
+   }
+
+   RETURN(VK_SUCCESS);
+}
+
+VkResult
+vgl_vkInvalidateMappedMemoryRanges(VkDevice device,
+                                   uint32_t range_count,
+                                   const VkMappedMemoryRange *ranges)
+{
+   TRACE_IN();
+
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_device_memory *vk_memory = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   for (uint32_t i = 0; i < range_count; i++) {
+      vk_memory = FROM_HANDLE(vk_memory, ranges[i].memory);
+      res = vtest_read_memory(icd_state.io_fd,
+                              vk_device->identifier,
+                              vk_memory->identifier,
+                              ranges[i].offset,
+                              ranges[i].size,
+                              vk_memory->ptr);
+      if (0 > res) {
+         fprintf(stderr, "unable to invalidate a mapped memory range (%d)\n", -res);
+      }
+
+   }
+
+   RETURN(VK_SUCCESS);
 }
 
 void

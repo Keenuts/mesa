@@ -22,5 +22,8 @@
     "vkCreateComputePipelines",
     "vkAllocateMemory",
     "vkBindBufferMemory",
+    "vkUpdateDescriptorSets",
+    "vkMapMemory",
+    "vkFlushMappedMemoryRanges",
     ""
 ]

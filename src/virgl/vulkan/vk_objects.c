@@ -391,3 +391,55 @@ vgl_vkBindBufferMemory(VkDevice device,
    vk_buffer->offset = offset;
    RETURN(VK_SUCCESS);
 }
+
+void
+vgl_vkUpdateDescriptorSets(VkDevice device,
+                           uint32_t write_count,
+                           const VkWriteDescriptorSet *write_info,
+                           uint32_t copy_count,
+                           const VkCopyDescriptorSet *copy_info)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(write_count);
+   UNUSED_PARAMETER(write_info);
+   UNUSED_PARAMETER(copy_count);
+   UNUSED_PARAMETER(copy_info);
+
+   RETURN();
+}
+
+VkResult
+vgl_vkMapMemory(VkDevice device,
+                VkDeviceMemory memory,
+                VkDeviceSize offset,
+                VkDeviceSize size,
+                VkMemoryMapFlags flags,
+                void **ptr)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(memory);
+   UNUSED_PARAMETER(offset);
+   UNUSED_PARAMETER(size);
+   UNUSED_PARAMETER(flags);
+   UNUSED_PARAMETER(ptr);
+
+   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+}
+
+VkResult
+vgl_vkFlushMappedMemoryRanges(VkDevice device,
+                              uint32_t range_count,
+                              const VkMappedMemoryRange *ranges)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(range_count);
+   UNUSED_PARAMETER(ranges);
+
+   RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+}

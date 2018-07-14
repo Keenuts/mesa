@@ -90,6 +90,7 @@ vgl_vkAllocateCommandBuffers(VkDevice device,
 
    for (uint32_t i = 0; i < info->commandBufferCount; i++) {
       vk_cmds[i].identifier = handles[i];
+      vk_cmds[i].pool = vk_pool;
       vk_cmds[i].device = vk_device;
       vk_cmds[i].level = info->level;
 
@@ -228,23 +229,25 @@ vgl_vkCmdDispatch(VkCommandBuffer buffer,
 }
 
 VkResult
-vgl_vkEndCommandBuffer(VkCommandBuffer buffer)
+vgl_vkEndCommandBuffer(VkCommandBuffer cmd)
 {
    TRACE_IN();
 
    int res;
    struct vk_command_buffer *vk_cmd = NULL;
    struct vk_compute_state *state = NULL;
-   struct vtest_command_record_info record_info;
+   struct vtest_command_record_info record_info = { 0 };
    uint32_t *descriptor_handles;
 
-   vk_cmd = FROM_HANDLE(vk_cmd, buffer);
+   vk_cmd = FROM_HANDLE(vk_cmd, cmd);
    state = &vk_cmd->compute_state;
 
    record_info.device_handle = vk_cmd->device->identifier;
+   record_info.pool_handle = vk_cmd->pool->identifier;
    record_info.cmd_handle = vk_cmd->identifier;
    record_info.pipeline_handle = state->pipeline->identifier;
    record_info.pipeline_layout_handle = state->layout->identifier;
+   record_info.bind_point = vk_cmd->bind_point;
    memcpy(&record_info.dispatch_size,
           &state->dispatch_size,
           sizeof(uint32_t) * 3);

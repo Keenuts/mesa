@@ -102,6 +102,7 @@ struct vk_compute_state {
 struct vk_command_buffer {
    uint32_t identifier;
    struct vk_device *device;
+   struct vk_command_pool *pool;
 
    VkCommandBufferLevel level;
    VkCommandBufferUsageFlagBits usage_flags;

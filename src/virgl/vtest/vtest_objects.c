@@ -449,7 +449,7 @@ int vtest_queue_submit(uint32_t sock_fd,
    struct vtest_hdr cmd;
    struct payload_queue_submit payload = { 0 };
 
-   INITIALIZE_HDR(cmd, VCMD_VK_WAIT_FOR_FENCES, sizeof(cmd));
+   INITIALIZE_HDR(cmd, VCMD_VK_QUEUE_SUBMIT, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
 

@@ -19,9 +19,10 @@ vgl_codegen_entrypoints = custom_target(
 
 vgl_vulkan_files = files(
     'icd.c',
+    'memory.c',
+    'vk_commands.c',
     'vk_device.c',
     'vk_objects.c',
-    'memory.c',
 )
 
 

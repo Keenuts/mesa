@@ -27,5 +27,11 @@
     "vkMapMemory",
     "vkUnmapMemory",
     "vkUpdateDescriptorSets",
+    "vkAllocateCommandBuffers",
+    "vkCmdBindPipeline",
+    "vkBeginCommandBuffer",
+    "vkCmdBindDescriptorSets",
+    "vkCmdDispatch",
+    "vkEndCommandBuffer",
     ""
 ]

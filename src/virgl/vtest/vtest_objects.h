@@ -1,65 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-/* Functions */
-
-int vtest_create_descriptor_set_layout(int sock_fd,
-   uint32_t handle,
-   const VkDescriptorSetLayoutCreateInfo *create_info,
-   uint32_t  *output);
-
-int vtest_create_buffer(int sock_fd,
-   uint32_t handle,
-   const VkBufferCreateInfo *create_info,
-   uint32_t  *output);
-
-int vtest_allocate_descriptor_sets(int sock_fd,
-   uint32_t handle,
-   uint32_t pool_handle,
-   const VkDescriptorSetAllocateInfo *create_info,
-   uint32_t *handles,
-   uint32_t  *output);
-
-int vtest_create_shader_module(int sock_fd,
-   uint32_t handle,
-   const VkShaderModuleCreateInfo *create_info,
-   uint32_t  *output);
-
-int vtest_create_descriptor_pool(int sock_fd,
-   uint32_t handle,
-   const VkDescriptorPoolCreateInfo *create_info,
-   uint32_t  *output);
-
-int vtest_create_pipeline_layout(int sock_fd,
-    uint32_t handle,
-    const VkPipelineLayoutCreateInfo *create_info,
-    uint32_t *set_handles,
-    uint32_t  *output);
-
-int vtest_create_compute_pipelines(int sock_fd,
-    uint32_t device_handle,
-    const VkComputePipelineCreateInfo *info,
-    uint32_t handles[2],
-    uint32_t  *output);
-
-int vtest_allocate_memory(int sock_fd,
-                          uint32_t device_handle,
-                          uint32_t memory_index,
-                          VkDeviceSize size,
-                          uint32_t *handle);
-
-int vtest_bind_buffer_memory(int sock_fd,
-                             uint32_t device_handle,
-                             uint32_t buffer_handle,
-                             uint32_t memory_handle,
-                             uint32_t offset);
-
-int vtest_write_descriptor_set(uint32_t sock_fd,
-                               uint32_t device_handle,
-                               uint32_t dst_set_handle,
-                               uint32_t *buffer_handles,
-                               const VkWriteDescriptorSet *info);
-
 /* Structures */
 
 struct payload_create_descriptor_set_layout_intro {
@@ -158,3 +99,63 @@ struct payload_write_descriptor_set_buffer {
    uint64_t offset;
    uint64_t range;
 };
+
+/* Functions */
+
+int vtest_create_descriptor_set_layout(int sock_fd,
+   uint32_t handle,
+   const VkDescriptorSetLayoutCreateInfo *create_info,
+   uint32_t  *output);
+
+int vtest_create_buffer(int sock_fd,
+   uint32_t handle,
+   const VkBufferCreateInfo *create_info,
+   uint32_t  *output);
+
+int vtest_allocate_descriptor_sets(int sock_fd,
+   uint32_t handle,
+   uint32_t pool_handle,
+   const VkDescriptorSetAllocateInfo *create_info,
+   uint32_t *handles,
+   uint32_t  *output);
+
+int vtest_create_shader_module(int sock_fd,
+   uint32_t handle,
+   const VkShaderModuleCreateInfo *create_info,
+   uint32_t  *output);
+
+int vtest_create_descriptor_pool(int sock_fd,
+   uint32_t handle,
+   const VkDescriptorPoolCreateInfo *create_info,
+   uint32_t  *output);
+
+int vtest_create_pipeline_layout(int sock_fd,
+    uint32_t handle,
+    const VkPipelineLayoutCreateInfo *create_info,
+    uint32_t *set_handles,
+    uint32_t  *output);
+
+int vtest_create_compute_pipelines(int sock_fd,
+    uint32_t device_handle,
+    const VkComputePipelineCreateInfo *info,
+    uint32_t handles[2],
+    uint32_t  *output);
+
+int vtest_allocate_memory(int sock_fd,
+                          uint32_t device_handle,
+                          uint32_t memory_index,
+                          VkDeviceSize size,
+                          uint32_t *handle);
+
+int vtest_bind_buffer_memory(int sock_fd,
+                             uint32_t device_handle,
+                             uint32_t buffer_handle,
+                             uint32_t memory_handle,
+                             uint32_t offset);
+
+int vtest_write_descriptor_set(uint32_t sock_fd,
+                               uint32_t device_handle,
+                               uint32_t dst_set_handle,
+                               uint32_t *buffer_handles,
+                               const VkWriteDescriptorSet *info);
+

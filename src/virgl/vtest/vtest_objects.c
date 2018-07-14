@@ -18,7 +18,7 @@ int vtest_create_descriptor_set_layout(int sock_fd,
    struct payload_create_descriptor_set_layout_intro intro;
    struct payload_create_descriptor_set_layout_pBindings pBindings;
 
-   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DESCRIPTOR_LAYOUT, sizeof(cmd));
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_DESCRIPTOR_SET_LAYOUT, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
 
@@ -278,6 +278,7 @@ int vtest_create_buffer(int sock_fd,
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
 
+   memset(&intro, 0, sizeof(intro));
    intro.handle = handle;
    intro.flags = create_info->flags;
    intro.size = create_info->size;
@@ -316,6 +317,7 @@ int vtest_bind_buffer_memory(int sock_fd,
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
 
+   memset(&payload, 0, sizeof(payload));
    payload.device_handle = device_handle;
    payload.buffer_handle = buffer_handle;
    payload.memory_handle = memory_handle;

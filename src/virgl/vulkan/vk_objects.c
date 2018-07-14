@@ -606,8 +606,24 @@ vgl_vkDestroyFence(VkDevice device,
 {
    TRACE_IN();
 
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
    UNUSED_PARAMETER(device);
    UNUSED_PARAMETER(fence);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}
+
+void
+vgl_vkFreeMemory(VkDevice device,
+                 VkDeviceMemory memory,
+                 const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(memory);
    UNUSED_PARAMETER(allocators);
 
    TRACE_OUT();

@@ -37,5 +37,6 @@
     "vkWaitForFences",
     "vkQueueSubmit",
     "vkDestroyFence",
+    "vkFreeMemory",
     ""
 ]

@@ -519,3 +519,83 @@ vgl_vkWaitForFences(VkDevice device,
    }
    RETURN(res);
 }
+
+static int
+queue_submit(const struct vk_device *device,
+             const struct vk_queue *queue,
+             const VkSubmitInfo *info,
+             uint32_t fence_handle)
+{
+   struct vk_semaphore *vk_semaphore = NULL;
+   struct vk_command_buffer *vk_cmd = NULL;
+   uint32_t *wait_infos = NULL;
+   uint32_t *cmds_infos = NULL;
+   uint32_t *signal_handles = NULL;
+
+   wait_infos = alloca(sizeof(uint32_t) * info->waitSemaphoreCount * 2);
+   cmds_infos = alloca(sizeof(uint32_t) * info->commandBufferCount * 2);
+   signal_handles = alloca(sizeof(uint32_t) * info->signalSemaphoreCount);
+
+   for (uint32_t i = 0; i < info->waitSemaphoreCount; i++) {
+      vk_semaphore = FROM_HANDLE(vk_semaphore, info->pWaitSemaphores[i]);
+
+      wait_infos[2 * i + 0] = vk_semaphore->identifier;
+      wait_infos[2 * i + 1] = info->pWaitDstStageMask[i];
+   }
+
+   for (uint32_t i = 0; i < info->commandBufferCount; i++) {
+      vk_cmd = FROM_HANDLE(vk_cmd, info->pCommandBuffers[i]);
+
+      cmds_infos[2 * i + 0] = vk_cmd->pool->identifier;
+      cmds_infos[2 * i + 1] = vk_cmd->identifier;
+   }
+
+   for (uint32_t i = 0; i < info->signalSemaphoreCount; i++) {
+      vk_semaphore = FROM_HANDLE(vk_semaphore, info->pSignalSemaphores[i]);
+      signal_handles[i] = vk_semaphore->identifier;
+   }
+
+   return vtest_queue_submit(icd_state.io_fd,
+                             device->identifier,
+                             queue->identifier,
+                             fence_handle,
+                             info,
+                             wait_infos,
+                             cmds_infos,
+                             signal_handles);
+}
+
+VkResult
+vgl_vkQueueSubmit(VkQueue queue,
+                  uint32_t submit_count,
+                  const VkSubmitInfo *infos,
+                  VkFence fence)
+{
+   TRACE_IN();
+
+   int res;
+   VkResult err = VK_SUCCESS;
+   struct vk_queue *vk_queue = NULL;
+   struct vk_device *vk_device = NULL;
+   struct vk_fence *vk_fence = NULL;
+
+
+   vk_queue = FROM_HANDLE(vk_queue, queue);
+   vk_device = vk_queue->device;
+   vk_fence = FROM_HANDLE(vk_fence, fence);
+
+   for (uint32_t i = 0; i < submit_count; i++) {
+      if (i == submit_count - 1) {
+         res = queue_submit(vk_device, vk_queue, infos + i, vk_fence->identifier);
+      }
+      else {
+         res = queue_submit(vk_device, vk_queue, infos + i, 0);
+      }
+
+      if (0 > res) {
+         err = VK_ERROR_DEVICE_LOST;
+      }
+   }
+
+   RETURN(err);
+}

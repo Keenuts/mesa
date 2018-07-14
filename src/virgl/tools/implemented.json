@@ -35,5 +35,6 @@
     "vkEndCommandBuffer",
     "vkCreateFence",
     "vkWaitForFences",
+    "vkQueueSubmit",
     ""
 ]

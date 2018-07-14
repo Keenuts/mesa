@@ -112,6 +112,19 @@ struct payload_wait_for_fences {
    uint32_t timeout;
    /* uint32_t fence_handles[] */;
 };
+
+struct payload_queue_submit {
+   uint32_t device_handle;
+   uint32_t queue_handle;
+   uint32_t fence_handle;
+   uint32_t wait_count;
+   uint32_t cmd_count;
+   uint32_t signal_count;
+   /* uint32_t wait_handles[]; */
+   /* uint32_t cmd_handles[]; */
+   /* uint32_t signal_handles[]; */
+};
+
 /* Functions */
 
 int vtest_create_descriptor_set_layout(int sock_fd,
@@ -182,3 +195,12 @@ int vtest_wait_for_fences(uint32_t sock_fd,
                           uint32_t wait_all,
                           uint64_t timeout,
                           uint32_t *handles);
+
+int vtest_queue_submit(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t queue_handle,
+                       uint32_t fence_handle,
+                       const VkSubmitInfo *info,
+                       uint32_t *wait_infos,
+                       uint32_t *cmds_infos,
+                       uint32_t *signal_handles);

@@ -434,3 +434,49 @@ int vtest_wait_for_fences(uint32_t sock_fd,
 
    RETURN(result.error_code);
 }
+
+int vtest_queue_submit(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t queue_handle,
+                       uint32_t fence_handle,
+                       const VkSubmitInfo *info,
+                       uint32_t *wait_infos,
+                       uint32_t *cmds_infos,
+                       uint32_t *signal_handles)
+{
+   ssize_t res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_queue_submit payload = { 0 };
+
+   INITIALIZE_HDR(cmd, VCMD_VK_WAIT_FOR_FENCES, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_handle = device_handle;
+   payload.queue_handle = queue_handle;
+   payload.fence_handle = fence_handle;
+   payload.wait_count = info->waitSemaphoreCount;
+   payload.cmd_count = info->commandBufferCount;
+   payload.signal_count = info->signalSemaphoreCount;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_write(sock_fd,
+                           wait_infos,
+                           sizeof(uint32_t) * info->waitSemaphoreCount * 2);
+   CHECK_IO_RESULT(res, sizeof(uint32_t) * info->waitSemaphoreCount * 2);
+   res = virgl_block_write(sock_fd,
+                           cmds_infos,
+                           sizeof(uint32_t) * info->commandBufferCount * 2);
+   CHECK_IO_RESULT(res, sizeof(uint32_t) * info->commandBufferCount * 2);
+   res = virgl_block_write(sock_fd,
+                           signal_handles,
+                           sizeof(uint32_t) * info->signalSemaphoreCount);
+   CHECK_IO_RESULT(res, sizeof(uint32_t) * info->signalSemaphoreCount);
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+   RETURN(result.error_code);
+}

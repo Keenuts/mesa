@@ -487,3 +487,35 @@ vgl_vkCreateFence(VkDevice device,
    *handle = TO_HANDLE(vk_fence);
    RETURN(VK_SUCCESS);
 }
+
+VkResult
+vgl_vkWaitForFences(VkDevice device,
+                uint32_t fence_count,
+                const VkFence *fences,
+                VkBool32 wait_all,
+                uint64_t timeout)
+{
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_fence *vk_fence = NULL;
+   uint32_t *handles = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   handles = alloca(sizeof(*handles) * fence_count);
+   for (uint32_t i = 0; i < fence_count; i++) {
+      vk_fence = FROM_HANDLE(vk_fence, fences[i]);
+      handles[i] = vk_fence->identifier;
+   }
+
+   res = vtest_wait_for_fences(icd_state.io_fd,
+                               vk_device->identifier,
+                               fence_count,
+                               wait_all,
+                               timeout,
+                               handles);
+   if (0 > res) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+   RETURN(res);
+}

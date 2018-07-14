@@ -401,3 +401,36 @@ int vtest_create_fence(uint32_t sock_fd,
 
    RETURN(result.error_code);
 }
+
+int vtest_wait_for_fences(uint32_t sock_fd,
+                          uint32_t device_handle,
+                          uint32_t fence_count,
+                          uint32_t wait_all,
+                          uint64_t timeout,
+                          uint32_t *handles)
+{
+   ssize_t res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_wait_for_fences payload = { 0 };
+
+   INITIALIZE_HDR(cmd, VCMD_VK_WAIT_FOR_FENCES, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_handle = device_handle;
+   payload.fence_count = fence_count;
+   payload.wait_all = wait_all;
+   payload.timeout = timeout;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_write(sock_fd, handles, sizeof(uint32_t) * fence_count);
+   CHECK_IO_RESULT(res, sizeof(uint32_t) * fence_count);
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   RETURN(result.error_code);
+}

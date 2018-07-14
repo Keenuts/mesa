@@ -104,6 +104,14 @@ struct payload_create_fence {
    uint32_t device_handle;
    uint32_t flags;
 };
+
+struct payload_wait_for_fences {
+   uint32_t device_handle;
+   uint32_t fence_count;
+   uint32_t wait_all;
+   uint32_t timeout;
+   /* uint32_t fence_handles[] */;
+};
 /* Functions */
 
 int vtest_create_descriptor_set_layout(int sock_fd,
@@ -168,3 +176,9 @@ int vtest_create_fence(uint32_t sock_fd,
                        uint32_t flags,
                        uint32_t *output);
 
+int vtest_wait_for_fences(uint32_t sock_fd,
+                          uint32_t device_handle,
+                          uint32_t fence_count,
+                          uint32_t wait_all,
+                          uint64_t timeout,
+                          uint32_t *handles);

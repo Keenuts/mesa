@@ -75,6 +75,7 @@
 #define VCMD_VK_WRITE_DESCRIPTOR_SET                  27
 #define VCMD_VK_WRITE_MEMORY                          28
 #define VCMD_VK_CREATE_FENCE 29
+#define VCMD_VK_WAIT_FOR_FENCES 30
 
 
 #define VCMD_COMMAND_COUNT                            28

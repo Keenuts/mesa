@@ -7,10 +7,6 @@
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
-
-/* file generated during compilation
-   FIXME: should be done at the config
- */
 #include "vtest/vtest_objects.h"
 
 VkResult
@@ -92,6 +88,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    vk_device = FROM_HANDLE(vk_device, device);
    vk_pool = FROM_HANDLE(vk_pool, info->descriptorPool);
 
+   //FIXME: use allocation pool
    vk_sets = malloc(sizeof(*vk_sets) * info->descriptorSetCount);
    if (NULL == vk_sets) {
       RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
@@ -161,69 +158,71 @@ vgl_vkCreatePipelineLayout(VkDevice device,
                            const VkAllocationCallbacks *allocators,
                            VkPipelineLayout *pipeline_layout)
 {
-    TRACE_IN();
-    int res;
-    struct vk_device *vk_device = NULL;
-    struct vk_pipeline_layout *vk_pipeline_layout = NULL;
-    struct vk_descriptor_set_layout *vk_layout = NULL;
-    uint32_t *set_handles = NULL;
+   TRACE_IN();
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_pipeline_layout *vk_pipeline_layout = NULL;
+   struct vk_descriptor_set_layout *vk_layout = NULL;
+   uint32_t *set_handles = NULL;
 
-    vk_device = FROM_HANDLE(vk_device, device);
-    vk_pipeline_layout = vk_malloc(sizeof(*vk_pipeline_layout), allocators,
-                                   VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
-    if (NULL == vk_pipeline_layout) {
-        RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
-    }
+   vk_device = FROM_HANDLE(vk_device, device);
+   vk_pipeline_layout = vk_malloc(sizeof(*vk_pipeline_layout), allocators,
+                                  VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (NULL == vk_pipeline_layout) {
+      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+   }
 
-    set_handles = alloca(sizeof(*set_handles) * create_info->setLayoutCount);
-    for (uint32_t i = 0; i < create_info->setLayoutCount; i++) {
-        vk_layout = FROM_HANDLE(vk_layout, create_info->pSetLayouts[i]);
-        set_handles[i] = vk_layout->identifier;
-    }
+   set_handles = alloca(sizeof(*set_handles) * create_info->setLayoutCount);
+   for (uint32_t i = 0; i < create_info->setLayoutCount; i++) {
+      vk_layout = FROM_HANDLE(vk_layout, create_info->pSetLayouts[i]);
+      set_handles[i] = vk_layout->identifier;
+   }
 
-    res = vtest_create_pipeline_layout(icd_state.io_fd,
-                                       vk_device->identifier,
-                                       create_info,
-                                       set_handles,
-                                       &vk_pipeline_layout->identifier);
-    if (res < 0) {
-        RETURN(VK_ERROR_DEVICE_LOST);
-    }
+   res = vtest_create_pipeline_layout(icd_state.io_fd,
+                                      vk_device->identifier,
+                                      create_info,
+                                      set_handles,
+                                      &vk_pipeline_layout->identifier);
+   if (res < 0) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
 
-    *pipeline_layout = TO_HANDLE(vk_pipeline_layout);
-    RETURN(VK_SUCCESS);
+   vk_pipeline_layout->max_set_count = create_info->setLayoutCount;
+   *pipeline_layout = TO_HANDLE(vk_pipeline_layout);
+   RETURN(VK_SUCCESS);
 }
 
 static VkResult create_compute_pipeline(const struct vk_device *vk_device,
                                         const VkComputePipelineCreateInfo *info,
                                         struct vk_pipeline *vk_pipeline)
 {
-    if (VK_PIPELINE_CREATE_DERIVATIVE_BIT & info->flags) {
-        fprintf(stderr, "derivative pipelines not supported yet.\n");
-        return VK_ERROR_FEATURE_NOT_PRESENT;
-    }
+   if (VK_PIPELINE_CREATE_DERIVATIVE_BIT & info->flags) {
+      fprintf(stderr, "derivative pipelines not supported yet.\n");
+      return VK_ERROR_FEATURE_NOT_PRESENT;
+   }
 
-    int res;
-    struct vk_pipeline_layout   *layout;
-    struct vk_shader_module     *shader_module;
-    uint32_t handles[2];
+   int res;
+   struct vk_pipeline_layout   *layout;
+   struct vk_shader_module     *shader_module;
+   uint32_t handles[2];
 
-    layout = FROM_HANDLE(layout, info->layout);
-    shader_module = FROM_HANDLE(shader_module, info->stage.module);
+   layout = FROM_HANDLE(layout, info->layout);
+   shader_module = FROM_HANDLE(shader_module, info->stage.module);
 
-    handles[0] = layout->identifier;
-    handles[1] = shader_module->identifier;
+   handles[0] = layout->identifier;
+   handles[1] = shader_module->identifier;
 
-    res = vtest_create_compute_pipelines(icd_state.io_fd,
-                                         vk_device->identifier,
-                                         info,
-                                         handles,
-                                         &vk_pipeline->identifier);
-    if (res < 0) {
-        return VK_ERROR_INITIALIZATION_FAILED;
-    }
+   res = vtest_create_compute_pipelines(icd_state.io_fd,
+                                        vk_device->identifier,
+                                        info,
+                                        handles,
+                                        &vk_pipeline->identifier);
+   if (res < 0) {
+      return VK_ERROR_INITIALIZATION_FAILED;
+   }
 
-    return VK_SUCCESS;
+   vk_pipeline->layout = layout;
+   return VK_SUCCESS;
 }
 
 VkResult

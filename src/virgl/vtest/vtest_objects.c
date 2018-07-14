@@ -341,8 +341,8 @@ int vtest_write_descriptor_set(uint32_t sock_fd,
    int res;
    struct vtest_result result;
    struct vtest_hdr cmd;
-   struct payload_write_descriptor_set payload;
-   struct payload_write_descriptor_set_buffer buffer_info;
+   struct payload_write_descriptor_set payload = { 0 };
+   struct payload_write_descriptor_set_buffer buffer_info = { 0 };
 
    TRACE_IN();
 

@@ -599,3 +599,17 @@ vgl_vkQueueSubmit(VkQueue queue,
 
    RETURN(err);
 }
+
+void
+vgl_vkDestroyFence(VkDevice device,
+               VkFence fence,
+               const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(fence);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}

@@ -36,5 +36,6 @@
     "vkCreateFence",
     "vkWaitForFences",
     "vkQueueSubmit",
+    "vkDestroyFence",
     ""
 ]

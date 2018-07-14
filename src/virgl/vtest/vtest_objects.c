@@ -373,3 +373,31 @@ int vtest_write_descriptor_set(uint32_t sock_fd,
    CHECK_IO_RESULT(res, sizeof(result));
    RETURN(result.error_code);
 }
+
+int vtest_create_fence(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t flags,
+                       uint32_t *output)
+{
+   ssize_t res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_create_fence payload = { 0 };
+
+   INITIALIZE_HDR(cmd, VCMD_VK_CREATE_FENCE, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_handle = device_handle;
+   payload.flags = flags;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   *output = result.result;
+
+   RETURN(result.error_code);
+}

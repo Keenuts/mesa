@@ -38,6 +38,7 @@ struct vk_queue {
    uint32_t identifier;
    uint32_t queue_index;
    uint32_t family_index;
+   struct vk_device *device;
 };
 
 struct vk_descriptor_pool
@@ -113,14 +114,12 @@ struct vk_command_buffer {
    struct vk_compute_state compute_state;
 };
 
-struct vk_command_pool
-{
+struct vk_command_pool {
    uint32_t identifier;
    const VkAllocationCallbacks *allocators;
 };
 
-struct vk_device
-{
+struct vk_device {
    VK_LOADER_DATA loader_data;
    struct vk_physical_device *physical_device;
    uint32_t identifier;
@@ -132,4 +131,11 @@ struct vk_device
    struct vk_command_pool command_pool;
 };
 
+struct vk_fence {
+   uint32_t identifier;
+};
+
+struct vk_semaphore {
+   uint32_t identifier;
+};
 #endif

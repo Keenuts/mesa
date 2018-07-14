@@ -305,6 +305,7 @@ initialize_vk_device(uint32_t physical_device_id,
          dev->queues[id].identifier = id;
          dev->queues[id].family_index = i;
          dev->queues[id].queue_index = j;
+         dev->queues[id].device = dev;
          id++;
       }
    }

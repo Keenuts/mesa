@@ -33,5 +33,6 @@
     "vkCmdBindDescriptorSets",
     "vkCmdDispatch",
     "vkEndCommandBuffer",
+    "vkCreateFence",
     ""
 ]

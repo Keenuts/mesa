@@ -100,6 +100,10 @@ struct payload_write_descriptor_set_buffer {
    uint64_t range;
 };
 
+struct payload_create_fence {
+   uint32_t device_handle;
+   uint32_t flags;
+};
 /* Functions */
 
 int vtest_create_descriptor_set_layout(int sock_fd,
@@ -158,4 +162,9 @@ int vtest_write_descriptor_set(uint32_t sock_fd,
                                uint32_t dst_set_handle,
                                uint32_t *buffer_handles,
                                const VkWriteDescriptorSet *info);
+
+int vtest_create_fence(uint32_t sock_fd,
+                       uint32_t device_handle,
+                       uint32_t flags,
+                       uint32_t *output);
 

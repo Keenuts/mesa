@@ -457,3 +457,33 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
    UNUSED_PARAMETER(copy_info);
    RETURN();
 }
+
+VkResult
+vgl_vkCreateFence(VkDevice device,
+                  const VkFenceCreateInfo *info,
+                  const VkAllocationCallbacks *allocators,
+                  VkFence *handle)
+{
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_fence *vk_fence = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+   vk_fence = vk_malloc(sizeof(*vk_fence),
+                        allocators,
+                        VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+   if (NULL == vk_fence) {
+      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+   }
+
+   res = vtest_create_fence(icd_state.io_fd,
+                            vk_device->identifier,
+                            info->flags,
+                            &vk_fence->identifier);
+   if (0 > res) {
+      RETURN(VK_ERROR_DEVICE_LOST);
+   }
+
+   *handle = TO_HANDLE(vk_fence);
+   RETURN(VK_SUCCESS);
+}

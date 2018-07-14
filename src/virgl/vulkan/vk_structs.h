@@ -100,6 +100,8 @@ struct vk_compute_state {
 };
 
 struct vk_command_buffer {
+   VK_LOADER_DATA loader_data;
+
    uint32_t identifier;
    struct vk_device *device;
    struct vk_command_pool *pool;

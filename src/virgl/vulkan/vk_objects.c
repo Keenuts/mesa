@@ -256,7 +256,7 @@ vgl_vkCreateComputePipelines(VkDevice device,
     for (uint32_t i = 0; i < create_info_count; i++) {
         res = create_compute_pipeline(vk_device,
                                       create_info + i,
-                                      vk_pipelines + 1);
+                                      vk_pipelines + i);
         if (0 != res) {
             free(vk_pipelines);
             RETURN(res);

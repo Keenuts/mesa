@@ -538,16 +538,15 @@ queue_submit(const struct vk_device *device,
 
    for (uint32_t i = 0; i < info->waitSemaphoreCount; i++) {
       vk_semaphore = FROM_HANDLE(vk_semaphore, info->pWaitSemaphores[i]);
-
-      wait_infos[2 * i + 0] = vk_semaphore->identifier;
-      wait_infos[2 * i + 1] = info->pWaitDstStageMask[i];
+      wait_infos[i] = vk_semaphore->identifier;
+      wait_infos[info->waitSemaphoreCount + i] = info->pWaitDstStageMask[i];
    }
 
    for (uint32_t i = 0; i < info->commandBufferCount; i++) {
       vk_cmd = FROM_HANDLE(vk_cmd, info->pCommandBuffers[i]);
 
-      cmds_infos[2 * i + 0] = vk_cmd->pool->identifier;
-      cmds_infos[2 * i + 1] = vk_cmd->identifier;
+      cmds_infos[i] = vk_cmd->pool->identifier;
+      cmds_infos[info->commandBufferCount + i] = vk_cmd->identifier;
    }
 
    for (uint32_t i = 0; i < info->signalSemaphoreCount; i++) {

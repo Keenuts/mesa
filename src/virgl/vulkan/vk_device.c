@@ -265,6 +265,7 @@ get_physical_device_per_id(uint32_t device_id)
       if (0 == device_id) {
          return &it->device;
       }
+      device_id--;
    }
 
    return NULL;

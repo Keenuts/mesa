@@ -290,6 +290,11 @@ initialize_vk_device(uint32_t physical_device_id,
    dev->physical_device = get_physical_device_per_id(physical_device_id);
    dev->device_lost = 0;
 
+   if (NULL == dev->physical_device) {
+      fprintf(stderr, "invalid physical device ID=%u\n", physical_device_id);
+      return -1;
+   }
+
    queue_count = 0;
    for (uint32_t i = 0; i < info->queueCreateInfoCount; i++) {
       queue_count += info->pQueueCreateInfos[i].queueCount;

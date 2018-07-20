@@ -40,5 +40,6 @@
     "vkFreeMemory",
     "vkDestroyBuffer",
     "vkDestroyShaderModule",
+    "vkDestroyDescriptorPool",
     ""
 ]

@@ -673,3 +673,18 @@ vgl_vkDestroyDescriptorPool(VkDevice device,
 
    TRACE_OUT();
 }
+
+void
+vgl_vkDestroyDescriptorSetLayout(VkDevice device,
+                                 VkDescriptorSetLayout layout,
+                                 const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(layout);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}

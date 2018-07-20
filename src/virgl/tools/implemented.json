@@ -41,5 +41,6 @@
     "vkDestroyBuffer",
     "vkDestroyShaderModule",
     "vkDestroyDescriptorPool",
+    "vkDestroyDescriptorSetLayout",
     ""
 ]

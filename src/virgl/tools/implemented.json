@@ -38,5 +38,6 @@
     "vkQueueSubmit",
     "vkDestroyFence",
     "vkFreeMemory",
+    "vkDestroyBuffer",
     ""
 ]

@@ -628,3 +628,18 @@ vgl_vkFreeMemory(VkDevice device,
 
    TRACE_OUT();
 }
+
+void
+vgl_vkDestroyBuffer(VkDevice device,
+                    VkBuffer buffer,
+                    const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(buffer);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}

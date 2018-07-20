@@ -45,5 +45,6 @@
     "vkDestroyPipelineLayout",
     "vkDestroyPipeline",
     "vkDestroyCommandPool",
+    "vkDestroyDevice",
     ""
 ]

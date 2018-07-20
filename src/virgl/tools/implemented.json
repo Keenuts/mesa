@@ -44,5 +44,6 @@
     "vkDestroyDescriptorSetLayout",
     "vkDestroyPipelineLayout",
     "vkDestroyPipeline",
+    "vkDestroyCommandPool",
     ""
 ]

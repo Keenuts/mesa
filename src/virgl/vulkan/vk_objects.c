@@ -703,3 +703,18 @@ vgl_vkDestroyPipelineLayout(VkDevice device,
 
    TRACE_OUT();
 }
+
+void
+vgl_vkDestroyPipeline(VkDevice device,
+                      VkPipeline pipeline,
+                      const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(pipeline);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}

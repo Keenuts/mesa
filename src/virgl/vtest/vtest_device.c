@@ -229,7 +229,7 @@ int vtest_read_memory(uint32_t sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
 
-   res=virgl_block_read(sock_fd, (char*)ptr + offset, size);
+   res=virgl_block_read(sock_fd, (char*)ptr, size);
    CHECK_IO_RESULT(res, size);
 
    RETURN(0);

@@ -39,5 +39,6 @@
     "vkDestroyFence",
     "vkFreeMemory",
     "vkDestroyBuffer",
+    "vkDestroyShaderModule",
     ""
 ]

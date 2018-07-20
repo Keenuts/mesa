@@ -643,3 +643,18 @@ vgl_vkDestroyBuffer(VkDevice device,
 
    TRACE_OUT();
 }
+
+void
+vgl_vkDestroyShaderModule(VkDevice device,
+                          VkShaderModule module,
+                          const VkAllocationCallbacks *allocators)
+{
+   TRACE_IN();
+
+   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
+   UNUSED_PARAMETER(device);
+   UNUSED_PARAMETER(module);
+   UNUSED_PARAMETER(allocators);
+
+   TRACE_OUT();
+}

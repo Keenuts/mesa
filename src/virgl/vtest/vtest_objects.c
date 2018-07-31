@@ -1,7 +1,6 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "common/macros.h"
 #include "virgl_vtest.h"
 #include "vtest_protocol.h"
 #include "vtest_objects.h"
@@ -40,7 +39,7 @@ int vtest_create_descriptor_set_layout(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 
@@ -73,13 +72,13 @@ int vtest_allocate_descriptor_sets(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    if (result.error_code != 0) {
-      RETURN(result.error_code);
+      return result.error_code;
    }
 
    res = virgl_block_read(sock_fd, output, sizeof(*output) * result.result);
    CHECK_IO_RESULT(res, result.result * sizeof(uint32_t));
 
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_shader_module(int sock_fd,
@@ -110,7 +109,7 @@ int vtest_create_shader_module(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_descriptor_pool(int sock_fd,
@@ -146,7 +145,7 @@ int vtest_create_descriptor_pool(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_pipeline_layout(int sock_fd,
@@ -155,8 +154,6 @@ int vtest_create_pipeline_layout(int sock_fd,
     uint32_t *set_handles,
     uint32_t  *output)
 {
-   TRACE_IN();
-
    int res;
    struct vtest_result result;
    struct vtest_hdr cmd;
@@ -192,7 +189,7 @@ int vtest_create_pipeline_layout(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_compute_pipelines(int sock_fd,
@@ -201,8 +198,6 @@ int vtest_create_compute_pipelines(int sock_fd,
     uint32_t handles[2],
     uint32_t  *output)
 {
-   TRACE_IN();
-
    int res;
    struct vtest_result result;
    struct vtest_hdr cmd;
@@ -230,7 +225,7 @@ int vtest_create_compute_pipelines(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_allocate_memory(int sock_fd,
@@ -244,7 +239,6 @@ int vtest_allocate_memory(int sock_fd,
    struct vtest_hdr cmd;
    struct payload_allocate_memory intro;
 
-   TRACE_IN();
    INITIALIZE_HDR(cmd, VCMD_VK_ALLOCATE_MEMORY, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
    CHECK_IO_RESULT(res, sizeof(cmd));
@@ -261,7 +255,7 @@ int vtest_allocate_memory(int sock_fd,
 
    *handle = result.result;
 
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_buffer(int sock_fd,
@@ -299,7 +293,7 @@ int vtest_create_buffer(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
    *output = result.result;
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_bind_buffer_memory(int sock_fd,
@@ -329,7 +323,7 @@ int vtest_bind_buffer_memory(int sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
 
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_write_descriptor_set(uint32_t sock_fd,
@@ -343,8 +337,6 @@ int vtest_write_descriptor_set(uint32_t sock_fd,
    struct vtest_hdr cmd;
    struct payload_write_descriptor_set payload = { 0 };
    struct payload_write_descriptor_set_buffer buffer_info = { 0 };
-
-   TRACE_IN();
 
    INITIALIZE_HDR(cmd, VCMD_VK_WRITE_DESCRIPTOR_SET, sizeof(cmd));
    res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
@@ -371,7 +363,7 @@ int vtest_write_descriptor_set(uint32_t sock_fd,
 
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_create_fence(uint32_t sock_fd,
@@ -399,7 +391,7 @@ int vtest_create_fence(uint32_t sock_fd,
 
    *output = result.result;
 
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_wait_for_fences(uint32_t sock_fd,
@@ -432,7 +424,7 @@ int vtest_wait_for_fences(uint32_t sock_fd,
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
 
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_queue_submit(uint32_t sock_fd,
@@ -478,7 +470,7 @@ int vtest_queue_submit(uint32_t sock_fd,
 
    res = virgl_block_read(sock_fd, &result, sizeof(result));
    CHECK_IO_RESULT(res, sizeof(result));
-   RETURN(result.error_code);
+   return result.error_code;
 }
 
 int vtest_destroy_object(uint32_t sock_fd,

@@ -1,9 +1,9 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "common/macros.h"
 #include "icd.h"
 #include "memory.h"
+#include "util/macros.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
@@ -15,7 +15,6 @@ vgl_vkCreateDescriptorPool(VkDevice device,
                            const VkAllocationCallbacks * allocators,
                            VkDescriptorPool *pool)
 {
-   TRACE_IN();
 
    struct vk_descriptor_pool *vk_pool = NULL;;
    struct vk_device *vk_device = NULL;
@@ -30,7 +29,7 @@ vgl_vkCreateDescriptorPool(VkDevice device,
                                 &vk_pool->identifier);
 
    *pool = TO_HANDLE(vk_pool);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -39,7 +38,6 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
                                 const VkAllocationCallbacks *allocators,
                                 VkDescriptorSetLayout *layout)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -51,7 +49,7 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
 
    if (vk_layout == NULL) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    res = vtest_create_descriptor_set_layout(icd_state.io_fd,
@@ -59,12 +57,12 @@ vgl_vkCreateDescriptorSetLayout(VkDevice device,
                                             info,
                                             &vk_layout->identifier);
    if (res < 0) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    *layout = TO_HANDLE(vk_layout);
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -72,7 +70,6 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
                              const VkDescriptorSetAllocateInfo *info,
                              VkDescriptorSet *vk_handles)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -82,7 +79,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    uint32_t *output_handles = NULL;
 
    if (0 == info->descriptorSetCount) {
-      RETURN(VK_SUCCESS);
+      return VK_SUCCESS;
    }
 
    vk_device = FROM_HANDLE(vk_device, device);
@@ -91,7 +88,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
    //FIXME: use allocation pool
    vk_sets = malloc(sizeof(*vk_sets) * info->descriptorSetCount);
    if (NULL == vk_sets) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    layout_handles = alloca(sizeof(uint32_t) * info->descriptorSetCount);
@@ -111,7 +108,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
                                         layout_handles,
                                         output_handles);
    if (0 > res) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    for (uint32_t i = 0; i < info->descriptorSetCount; i++) {
@@ -119,7 +116,7 @@ vgl_vkAllocateDescriptorSets(VkDevice device,
       vk_handles[i] = TO_HANDLE(vk_sets + i);
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -128,7 +125,6 @@ vgl_vkCreateShaderModule(VkDevice device,
                          const VkAllocationCallbacks *allocators,
                          VkShaderModule *shader_module)
 {
-   TRACE_IN();
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_shader_module *vk_shader_module = NULL;
@@ -137,7 +133,7 @@ vgl_vkCreateShaderModule(VkDevice device,
    vk_shader_module = vk_malloc(sizeof(*vk_shader_module), allocators,
                                 VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_shader_module) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    res = vtest_create_shader_module(icd_state.io_fd,
@@ -145,11 +141,11 @@ vgl_vkCreateShaderModule(VkDevice device,
                                     info,
                                     &vk_shader_module->identifier);
    if (res < 0) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    *shader_module = TO_HANDLE(vk_shader_module);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -158,7 +154,6 @@ vgl_vkCreatePipelineLayout(VkDevice device,
                            const VkAllocationCallbacks *allocators,
                            VkPipelineLayout *pipeline_layout)
 {
-   TRACE_IN();
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_pipeline_layout *vk_pipeline_layout = NULL;
@@ -169,7 +164,7 @@ vgl_vkCreatePipelineLayout(VkDevice device,
    vk_pipeline_layout = vk_malloc(sizeof(*vk_pipeline_layout), allocators,
                                   VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_pipeline_layout) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    set_handles = alloca(sizeof(*set_handles) * create_info->setLayoutCount);
@@ -184,12 +179,12 @@ vgl_vkCreatePipelineLayout(VkDevice device,
                                       set_handles,
                                       &vk_pipeline_layout->identifier);
    if (res < 0) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    vk_pipeline_layout->max_set_count = create_info->setLayoutCount;
    *pipeline_layout = TO_HANDLE(vk_pipeline_layout);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 static VkResult create_compute_pipeline(const struct vk_device *vk_device,
@@ -233,7 +228,6 @@ vgl_vkCreateComputePipelines(VkDevice device,
                              const VkAllocationCallbacks *allocators,
                              VkPipeline *pipeline)
 {
-    TRACE_IN();
 
     VkResult res;
     struct vk_device *vk_device = NULL;
@@ -241,7 +235,7 @@ vgl_vkCreateComputePipelines(VkDevice device,
 
     if (pipeline_cache != VK_NULL_HANDLE) {
         fprintf(stderr, "pipeline cache not supported for now.\n");
-        RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+        return VK_ERROR_FEATURE_NOT_PRESENT;
     }
 
     vk_device = FROM_HANDLE(vk_device, device);
@@ -250,7 +244,7 @@ vgl_vkCreateComputePipelines(VkDevice device,
                              VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
 
     if (NULL == vk_pipelines) {
-        RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+        return VK_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
     for (uint32_t i = 0; i < create_info_count; i++) {
@@ -259,14 +253,14 @@ vgl_vkCreateComputePipelines(VkDevice device,
                                       vk_pipelines + i);
         if (0 != res) {
             free(vk_pipelines);
-            RETURN(res);
+            return res;
         }
     }
 
     for (uint32_t i = 0; i < create_info_count; i++) {
         pipeline[i] = TO_HANDLE(vk_pipelines + i);
     }
-    RETURN(VK_SUCCESS);
+    return VK_SUCCESS;
 }
 
 VkResult
@@ -275,7 +269,6 @@ vgl_vkAllocateMemory(VkDevice device,
                      const VkAllocationCallbacks *allocators,
                      VkDeviceMemory *output)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -287,14 +280,14 @@ vgl_vkAllocateMemory(VkDevice device,
    phys_device = vk_device->physical_device;
 
    if (info->memoryTypeIndex >= phys_device->memory_properties.memoryTypeCount) {
-      RETURN(VK_ERROR_INVALID_EXTERNAL_HANDLE);
+      return VK_ERROR_INVALID_EXTERNAL_HANDLE;
    }
 
    vk_memory = vk_calloc(sizeof(*vk_memory),
                          allocators,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_memory) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    res = vtest_allocate_memory(icd_state.io_fd,
@@ -303,7 +296,7 @@ vgl_vkAllocateMemory(VkDevice device,
                                info->allocationSize,
                                &vk_memory->identifier);
    if (0 > res) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    mem_type = phys_device->memory_properties.memoryTypes[info->memoryTypeIndex];
@@ -312,7 +305,7 @@ vgl_vkAllocateMemory(VkDevice device,
    vk_memory->flags = mem_type.propertyFlags;
 
    *output = TO_HANDLE(vk_memory);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -321,7 +314,6 @@ vgl_vkCreateBuffer(VkDevice device,
                    const VkAllocationCallbacks *allocators,
                    VkBuffer *buffer)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -332,7 +324,7 @@ vgl_vkCreateBuffer(VkDevice device,
                          VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
 
    if (NULL == vk_buffer) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    memset(vk_buffer, 0, sizeof(*vk_buffer));
@@ -341,7 +333,7 @@ vgl_vkCreateBuffer(VkDevice device,
                              info,
                              &vk_buffer->identifier);
    if (0 > res) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    vk_buffer->size = info->size;
@@ -350,7 +342,7 @@ vgl_vkCreateBuffer(VkDevice device,
 
    *buffer = TO_HANDLE(vk_buffer);
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -359,7 +351,6 @@ vgl_vkBindBufferMemory(VkDevice device,
                        VkDeviceMemory memory,
                        VkDeviceSize offset)
 {
-   TRACE_IN();
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_buffer *vk_buffer = NULL;
@@ -372,18 +363,18 @@ vgl_vkBindBufferMemory(VkDevice device,
    if (vk_buffer->flags & (VK_BUFFER_CREATE_SPARSE_BINDING_BIT |
                            VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT |
                            VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    if (offset > vk_memory->size
      || vk_buffer->size > vk_memory->size - offset
      || NULL != vk_buffer->binding) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    if (((vk_buffer->flags & VK_BUFFER_CREATE_PROTECTED_BIT) == 0)
        != ((vk_memory->flags & VK_MEMORY_PROPERTY_PROTECTED_BIT) == 0)) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    res = vtest_bind_buffer_memory(icd_state.io_fd,
@@ -392,12 +383,12 @@ vgl_vkBindBufferMemory(VkDevice device,
                                   vk_memory->identifier,
                                   offset);
    if (0 > res) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    vk_buffer->binding = vk_memory;
    vk_buffer->offset = offset;
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void
@@ -405,9 +396,8 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
                            uint32_t write_count,
                            const VkWriteDescriptorSet *write_info,
                            uint32_t copy_count,
-                           const VkCopyDescriptorSet *copy_info)
+                           UNUSED const VkCopyDescriptorSet *copy_info)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -421,13 +411,13 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
     */
    if (0 != copy_count) {
       fprintf(stderr, "descriptor copy not implemented for now\n");
-      RETURN();
+      return;
    }
 
    for (uint32_t i = 0; i < write_count; i++) {
       if (write_info[i].descriptorType & ~VK_DESCRIPTOR_TYPE_STORAGE_BUFFER) {
          fprintf(stderr, "Only VK_DESCRIPTOR_TYPE_STORAGE_BUFFER are supported\n");
-         RETURN();
+         return;
       }
    }
 
@@ -454,8 +444,7 @@ vgl_vkUpdateDescriptorSets(VkDevice device,
       }
    }
 
-   UNUSED_PARAMETER(copy_info);
-   RETURN();
+   return;
 }
 
 VkResult
@@ -473,7 +462,7 @@ vgl_vkCreateFence(VkDevice device,
                         allocators,
                         VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_fence) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    res = vtest_create_fence(icd_state.io_fd,
@@ -481,11 +470,11 @@ vgl_vkCreateFence(VkDevice device,
                             info->flags,
                             &vk_fence->identifier);
    if (0 > res) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
 
    *handle = TO_HANDLE(vk_fence);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -515,9 +504,9 @@ vgl_vkWaitForFences(VkDevice device,
                                timeout,
                                handles);
    if (0 > res) {
-      RETURN(VK_ERROR_DEVICE_LOST);
+      return VK_ERROR_DEVICE_LOST;
    }
-   RETURN(res);
+   return res;
 }
 
 static int
@@ -570,7 +559,6 @@ vgl_vkQueueSubmit(VkQueue queue,
                   const VkSubmitInfo *infos,
                   VkFence fence)
 {
-   TRACE_IN();
 
    int res;
    VkResult err = VK_SUCCESS;
@@ -596,7 +584,7 @@ vgl_vkQueueSubmit(VkQueue queue,
       }
    }
 
-   RETURN(err);
+   return err;
 }
 
 static void

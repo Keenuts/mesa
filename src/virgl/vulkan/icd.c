@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include "icd.h"
-#include "common/macros.h"
+#include "util/macros.h"
 #include "vgl_entrypoints.h"
 #include "vtest/virgl_vtest.h"
 
@@ -15,7 +15,6 @@ struct icd_state icd_state;
 PUBLIC VKAPI_ATTR VkResult VKAPI_CALL
 vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
 {
-   TRACE_IN();
 
    int sock_fd;
    const char *vulkan_driver = NULL;
@@ -23,7 +22,7 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
    printf("ICD: requested version: %u\n", *pSupportedVersion);
    if (*pSupportedVersion != 5) {
       fprintf(stderr, "vulkan implementation only supports loader interface 5\n");
-      RETURN(VK_ERROR_INCOMPATIBLE_DRIVER);
+      return VK_ERROR_INCOMPATIBLE_DRIVER;
    }
 
    memset(&icd_state, 0, sizeof(icd_state));
@@ -52,27 +51,25 @@ vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t * pSupportedVersion)
       if (sock_fd < 0) {
          fprintf(stderr,
                  "connection to virglrenderer's vtest server failed.\n");
-         RETURN(VK_ERROR_DEVICE_LOST);
+         return VK_ERROR_DEVICE_LOST;
       }
 
       icd_state.available = 1;
       icd_state.io_fd = sock_fd;
 
       initialize_physical_devices();
-      RETURN(VK_SUCCESS);
+      return VK_SUCCESS;
    } while (0);
 
    fprintf(stderr,
            "non vtest-based vulkan driver not implemented for now.\n");
    abort();
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 PUBLIC VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL
-vk_icdGetInstanceProcAddr(VkInstance instance, const char *pName)
+vk_icdGetInstanceProcAddr(UNUSED VkInstance instance, const char *pName)
 {
-   UNUSED_PARAMETER(instance);
-
    /* The loader should negociate with our driver first. Otherwise, something
     * went wrong */
    if (icd_state.available == 0) {
@@ -91,9 +88,8 @@ vk_icdGetInstanceProcAddr(VkInstance instance, const char *pName)
 };
 
 PFN_vkVoidFunction
-vgl_vkGetDeviceProcAddr(VkDevice device,
+vgl_vkGetDeviceProcAddr(UNUSED VkDevice device,
                         const char* name)
 {
-   UNUSED_PARAMETER(device);
    return vk_icdGetInstanceProcAddr(VK_NULL_HANDLE, name);
 }

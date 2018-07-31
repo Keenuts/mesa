@@ -1,9 +1,9 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "common/macros.h"
 #include "icd.h"
 #include "memory.h"
+#include "util/macros.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
@@ -17,7 +17,6 @@ vgl_vkCreateCommandPool(VkDevice device,
                         const VkAllocationCallbacks *allocators,
                         VkCommandPool *pool)
 {
-   TRACE_IN();
 
    int res;
    struct vk_command_pool *vk_pool = NULL;;
@@ -38,12 +37,12 @@ vgl_vkCreateCommandPool(VkDevice device,
                                    &vk_pool->identifier);
    if (0 > res) {
       free(vk_pool);
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    vk_pool->allocators = allocators;
    *pool = TO_HANDLE(vk_pool);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -51,7 +50,6 @@ vgl_vkAllocateCommandBuffers(VkDevice device,
                              const VkCommandBufferAllocateInfo *info,
                              VkCommandBuffer *output)
 {
-   TRACE_IN();
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_command_buffer *vk_cmds = NULL;
@@ -64,14 +62,14 @@ vgl_vkAllocateCommandBuffers(VkDevice device,
 
    if (VK_COMMAND_BUFFER_LEVEL_SECONDARY == info->level) {
       fprintf(stderr, "only primary command buffers are supported for now\n");
-      RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+      return VK_ERROR_FEATURE_NOT_PRESENT;
    }
 
    vk_cmds = vk_calloc(sizeof(*vk_cmds) * info->commandBufferCount,
                        vk_pool->allocators,
                        VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
    if (NULL == vk_cmds) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    handles = alloca(sizeof(uint32_t) * info->commandBufferCount);
@@ -86,7 +84,7 @@ vgl_vkAllocateCommandBuffers(VkDevice device,
                                         handles);
    if (res > 0) {
       free(vk_cmds);
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
    for (uint32_t i = 0; i < info->commandBufferCount; i++) {
@@ -98,7 +96,7 @@ vgl_vkAllocateCommandBuffers(VkDevice device,
       output[i] = TO_HANDLE(vk_cmds+ i);
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -111,7 +109,7 @@ vgl_vkBeginCommandBuffer(VkCommandBuffer cmd,
 
    if (VK_COMMAND_BUFFER_LEVEL_SECONDARY == vk_cmd->level) {
       fprintf(stderr, "only primary command buffers are supported for now\n");
-      RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+      return VK_ERROR_FEATURE_NOT_PRESENT;
    }
 
    vk_cmd->usage_flags = info->flags;
@@ -124,7 +122,7 @@ vgl_vkBeginCommandBuffer(VkCommandBuffer cmd,
 
    memset(&vk_cmd->compute_state, 0, sizeof(vk_cmd->compute_state));
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void
@@ -132,7 +130,6 @@ vgl_vkCmdBindPipeline(VkCommandBuffer buffer,
                   VkPipelineBindPoint bind_point,
                   VkPipeline pipeline)
 {
-   TRACE_IN();
 
    struct vk_command_buffer *vk_cmd = NULL;
    struct vk_pipeline *vk_pipeline = NULL;
@@ -163,7 +160,6 @@ vgl_vkCmdBindPipeline(VkCommandBuffer buffer,
       abort();
    }
 
-   TRACE_OUT();
 }
 
 void
@@ -173,10 +169,9 @@ vgl_vkCmdBindDescriptorSets(VkCommandBuffer buffer,
                             uint32_t first_set,
                             uint32_t descriptor_set_count,
                             const VkDescriptorSet *descriptor_sets,
-                            uint32_t dynamic_offset_count,
+                            UNUSED uint32_t dynamic_offset_count,
                             const uint32_t *dynamic_offsets)
 {
-   TRACE_IN();
 
    struct vk_command_buffer *vk_cmd = NULL;
    struct vk_pipeline_layout *vk_layout = NULL;
@@ -205,9 +200,6 @@ vgl_vkCmdBindDescriptorSets(VkCommandBuffer buffer,
       vk_descriptor = FROM_HANDLE(vk_descriptor, descriptor_sets[i]);
       state->descriptor_sets[i] = vk_descriptor;
    }
-
-   UNUSED_PARAMETER(dynamic_offset_count);
-   TRACE_OUT();
 }
 
 void
@@ -216,7 +208,6 @@ vgl_vkCmdDispatch(VkCommandBuffer buffer,
                   uint32_t group_count_y,
                   uint32_t group_count_z)
 {
-   TRACE_IN();
 
    struct vk_command_buffer *vk_cmd = NULL;
 
@@ -226,13 +217,11 @@ vgl_vkCmdDispatch(VkCommandBuffer buffer,
    vk_cmd->compute_state.dispatch_size[1] = group_count_y;
    vk_cmd->compute_state.dispatch_size[2] = group_count_z;
 
-   TRACE_OUT();
 }
 
 VkResult
 vgl_vkEndCommandBuffer(VkCommandBuffer cmd)
 {
-   TRACE_IN();
 
    int res;
    struct vk_command_buffer *vk_cmd = NULL;
@@ -261,10 +250,10 @@ vgl_vkEndCommandBuffer(VkCommandBuffer cmd)
 
    res = vtest_record_command(icd_state.io_fd, &record_info, descriptor_handles);
    if (0 > res) {
-      RETURN(VK_ERROR_OUT_OF_DEVICE_MEMORY);
+      return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void

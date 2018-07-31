@@ -2,23 +2,22 @@
 #include <string.h>
 #include <vulkan/vulkan.h>
 
-#include "common/macros.h"
 #include "icd.h"
 #include "memory.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
+#include "util/macros.h"
 
 static int initialize_physical_device(struct vk_physical_device *device)
 {
-    TRACE_IN();
     int res;
 
     res = vtest_get_sparse_properties(icd_state.io_fd,
                                       device->identifier,
                                       &device->sparse_properties);
     if (res < 0) {
-        RETURN(-1);
+        return -1;
     }
 
 
@@ -27,14 +26,14 @@ static int initialize_physical_device(struct vk_physical_device *device)
                                             &device->queue_family_count,
                                             &device->queue_family_properties);
     if (res < 0) {
-        RETURN(-2);
+        return -2;
     }
 
     res = vtest_get_device_memory_properties(icd_state.io_fd,
                                              device->identifier,
                                              &device->memory_properties);
     if (res < 0) {
-        RETURN(-3);
+        return -3;
     }
 
     /* To avoid unecessary copies, we force the app to explicitly mark memory updates */
@@ -43,7 +42,7 @@ static int initialize_physical_device(struct vk_physical_device *device)
             ~VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
 
-    RETURN(0);
+    return 0;
 }
 
 int
@@ -52,13 +51,12 @@ initialize_physical_devices(void)
    int res;
    uint32_t device_count;
 
-   TRACE_IN();
 
    list_init(&icd_state.physical_devices.list);
 
    res = vtest_get_physical_device_count(icd_state.io_fd, &device_count);
    if (res < 0) {
-      RETURN(-1);
+      return -1;
    }
 
    for (uint32_t i = 0; i < device_count; i++) {
@@ -66,7 +64,7 @@ initialize_physical_devices(void)
 
       node = malloc(sizeof(*node));
       if (node == NULL) {
-         RETURN(-2);
+         return -2;
       }
 
       list_init(&node->list);
@@ -79,17 +77,14 @@ initialize_physical_devices(void)
       list_append(&icd_state.physical_devices.list, &node->list);
    }
 
-   RETURN(0);
+   return 0;
 }
 
 VkResult
-vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
-                     const VkAllocationCallbacks * allocators,
+vgl_vkCreateInstance(UNUSED const VkInstanceCreateInfo *create_info,
+                     const VkAllocationCallbacks *allocators,
                      VkInstance * instance)
 {
-   TRACE_IN();
-   UNUSED_PARAMETER(create_info);
-
    struct vk_instance *internal_instance = NULL;
 
    internal_instance = vk_malloc(sizeof(*internal_instance), allocators,
@@ -99,61 +94,50 @@ vgl_vkCreateInstance(const VkInstanceCreateInfo * create_info,
    internal_instance->allocators = allocators;
 
    if (internal_instance == NULL) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    *instance = TO_HANDLE(internal_instance);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void
 vgl_vkDestroyInstance(VkInstance instance,
                       const VkAllocationCallbacks * allocators)
 {
-   TRACE_IN();
+   vk_free(allocators, instance);
 
-   UNUSED_PARAMETER(allocators);
-   free(instance);
-
-   RETURN();
+   return;
 }
 
 VkResult
-vgl_vkEnumerateInstanceExtensionProperties(const char *layer_name,
-                                           uint32_t * property_count,
-                                           VkExtensionProperties * properties)
+vgl_vkEnumerateInstanceExtensionProperties(UNUSED const char *layer_name,
+                                           uint32_t *property_count,
+                                           UNUSED VkExtensionProperties *properties)
 {
-   TRACE_IN();
-   UNUSED_PARAMETER(layer_name);
-   UNUSED_PARAMETER(properties);
-
    *property_count = 0;
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
 vgl_vkEnumerateInstanceVersion(uint32_t * pApiVersion)
 {
-   TRACE_IN();
 
    *pApiVersion = VK_MAKE_VERSION(1, 1, 0);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
-vgl_vkEnumeratePhysicalDevices(VkInstance instance,
+vgl_vkEnumeratePhysicalDevices(UNUSED VkInstance instance,
                                uint32_t * device_count,
                                VkPhysicalDevice * physical_devices)
 {
    struct vk_physical_device_list *it = NULL;
 
-   TRACE_IN();
-   UNUSED_PARAMETER(instance);
-
    if (physical_devices == NULL) {
       *device_count = list_length(&icd_state.physical_devices.list);
-      RETURN(VK_SUCCESS);
+      return VK_SUCCESS;
    }
 
    LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
@@ -161,7 +145,7 @@ vgl_vkEnumeratePhysicalDevices(VkInstance instance,
       physical_devices++;
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void vgl_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice handle,
@@ -169,12 +153,10 @@ void vgl_vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice handle,
 {
     struct vk_physical_device *device = NULL;
 
-    TRACE_IN();
     device = FROM_HANDLE(device, handle);
 
     memcpy(props, &device->memory_properties, sizeof(*props));
 
-    TRACE_OUT();
 }
 
 void
@@ -183,7 +165,6 @@ vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
 {
    struct vk_physical_device *dev;
 
-   TRACE_IN();
 
    dev = FROM_HANDLE(dev, device);
 
@@ -200,19 +181,15 @@ vgl_vkGetPhysicalDeviceProperties(VkPhysicalDevice device,
           &dev->sparse_properties,
           sizeof(dev->sparse_properties));
 
-   RETURN();
+   return;
 }
 
 void
-vgl_vkGetPhysicalDeviceFeatures(VkPhysicalDevice device,
+vgl_vkGetPhysicalDeviceFeatures(UNUSED VkPhysicalDevice device,
                                 VkPhysicalDeviceFeatures *features)
 {
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
    memset(features, 0, sizeof(*features));
-
-   RETURN();
+   return;
 }
 
 void
@@ -222,38 +199,31 @@ vgl_vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device,
 {
    struct vk_physical_device *dev;
 
-   TRACE_IN();
 
    dev = FROM_HANDLE(dev, device);
 
    if (queues_properties == NULL) {
       *queue_count = dev->queue_family_count;
-      RETURN();
+      return;
    }
 
    memcpy(queues_properties,
           dev->queue_family_properties,
           sizeof(*queues_properties) * *queue_count);
 
-   RETURN();
+   return;
 }
 
 VkResult
-vgl_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice device,
-                                         const char *layer_name,
-                                         uint32_t * properties_count,
-                                         VkExtensionProperties * properties)
+vgl_vkEnumerateDeviceExtensionProperties(UNUSED VkPhysicalDevice device,
+                                         UNUSED const char *layer_name,
+                                         UNUSED uint32_t * properties_count,
+                                         UNUSED VkExtensionProperties * properties)
 {
-   TRACE_IN();
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(layer_name);
-   UNUSED_PARAMETER(properties_count);
-   UNUSED_PARAMETER(properties);
-
    /* we do not display any extensions for now */
    *properties_count = 0;
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 static struct vk_physical_device*
@@ -276,14 +246,13 @@ initialize_vk_device(uint32_t physical_device_id,
                      const VkDeviceCreateInfo *info,
                      struct vk_device *dev)
 {
-   TRACE_IN();
 
    int res;
    uint32_t device_id, queue_count, id;
 
    res = vtest_create_device(icd_state.io_fd, physical_device_id, info, &device_id);
    if (res < 0) {
-      RETURN(VK_ERROR_INITIALIZATION_FAILED);
+      return VK_ERROR_INITIALIZATION_FAILED;
    }
 
    dev->identifier = device_id;
@@ -302,7 +271,7 @@ initialize_vk_device(uint32_t physical_device_id,
 
    dev->queues = calloc(queue_count, sizeof(*dev->queues));
    if (dev->queues == NULL) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    id = 0;
@@ -317,7 +286,7 @@ initialize_vk_device(uint32_t physical_device_id,
    }
    dev->queue_count = queue_count;
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -326,39 +295,35 @@ vgl_vkCreateDevice(VkPhysicalDevice phys_device,
                    const VkAllocationCallbacks *allocators,
                    VkDevice *device)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
    struct vk_physical_device *p_device = NULL;
 
-   //FIXME: use allocators
-   UNUSED_PARAMETER(allocators);
-
    if (info->enabledLayerCount != 0) {
       fprintf(stderr, "layer support is not implemented\n");
-      RETURN(VK_ERROR_FEATURE_NOT_PRESENT);
+      return VK_ERROR_FEATURE_NOT_PRESENT;
    }
 
    if (info->enabledExtensionCount != 0) {
       fprintf(stderr, "extensions support is not implemented\n");
-      RETURN(VK_ERROR_EXTENSION_NOT_PRESENT);
+      return VK_ERROR_EXTENSION_NOT_PRESENT;
    }
 
    vk_device = vk_malloc(sizeof(*vk_device), allocators,
                          VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE);
    if (vk_device == NULL) {
-      RETURN(VK_ERROR_OUT_OF_HOST_MEMORY);
+      return VK_ERROR_OUT_OF_HOST_MEMORY;
    }
 
    p_device = FROM_HANDLE(p_device, phys_device);
    res = initialize_vk_device(p_device->identifier, info, vk_device);
    if (res < 0) {
-      RETURN(res);
+      return res;
    }
 
    *device = TO_HANDLE(vk_device);
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void
@@ -367,9 +332,6 @@ vgl_vkGetDeviceQueue(VkDevice device,
                      uint32_t queue_index,
                      VkQueue *queue)
 {
-   TRACE_IN();
-   UNUSED_PARAMETER(device);
-
    struct vk_device *dev = NULL;
    uint32_t queue_count;
 
@@ -390,22 +352,17 @@ vgl_vkGetDeviceQueue(VkDevice device,
       break;
    }
 
-   RETURN();
+   return;
 }
 
 VkResult
-vgl_vkMapMemory(VkDevice device,
+vgl_vkMapMemory(UNUSED VkDevice device,
                 VkDeviceMemory memory,
                 VkDeviceSize offset,
                 VkDeviceSize size,
-                VkMemoryMapFlags flags,
+                UNUSED VkMemoryMapFlags flags,
                 void **ptr)
 {
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(flags);
-
    struct vk_device_memory *vk_memory = NULL;
 
    vk_memory = FROM_HANDLE(vk_memory, memory);
@@ -414,11 +371,11 @@ vgl_vkMapMemory(VkDevice device,
    vk_memory->map_offset = offset;
    vk_memory->ptr = malloc(size);
    if (NULL == ptr) {
-      RETURN(VK_ERROR_MEMORY_MAP_FAILED);
+      return VK_ERROR_MEMORY_MAP_FAILED;
    }
 
    *ptr = vk_memory->ptr;
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -426,7 +383,6 @@ vgl_vkFlushMappedMemoryRanges(VkDevice device,
                               uint32_t range_count,
                               const VkMappedMemoryRange *ranges)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -448,7 +404,7 @@ vgl_vkFlushMappedMemoryRanges(VkDevice device,
 
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 VkResult
@@ -456,7 +412,6 @@ vgl_vkInvalidateMappedMemoryRanges(VkDevice device,
                                    uint32_t range_count,
                                    const VkMappedMemoryRange *ranges)
 {
-   TRACE_IN();
 
    int res;
    struct vk_device *vk_device = NULL;
@@ -478,16 +433,13 @@ vgl_vkInvalidateMappedMemoryRanges(VkDevice device,
 
    }
 
-   RETURN(VK_SUCCESS);
+   return VK_SUCCESS;
 }
 
 void
-vgl_vkUnmapMemory(VkDevice device,
+vgl_vkUnmapMemory(UNUSED VkDevice device,
                   VkDeviceMemory memory)
 {
-   TRACE_IN();
-
-   UNUSED_PARAMETER(device);
 
    struct vk_device_memory *vk_memory = NULL;
 
@@ -496,7 +448,7 @@ vgl_vkUnmapMemory(VkDevice device,
    free(vk_memory->ptr);
    vk_memory->ptr = NULL;
 
-   RETURN();
+   return;
 }
 
 void

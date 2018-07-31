@@ -2,11 +2,13 @@
 #define MEMORY_H
 
 void* vk_malloc(size_t size,
-                const VkAllocationCallbacks * allocators,
+                const VkAllocationCallbacks *allocators,
                 VkSystemAllocationScope scope);
 
 void* vk_calloc(size_t size,
-                const VkAllocationCallbacks * allocators,
+                const VkAllocationCallbacks *allocators,
                 VkSystemAllocationScope scope);
+
+void vk_free(const VkAllocationCallbacks *allocators, void *ptr);
 
 #endif

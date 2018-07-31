@@ -38,3 +38,20 @@ void* vk_calloc(size_t size,
    memset(ptr, 0, size);
    return ptr;
 }
+
+void vk_free(const VkAllocationCallbacks *allocators, void *ptr)
+{
+   do {
+      if (NULL == allocators) {
+         break;
+      }
+
+      if (NULL == allocators->pfnFree) {
+         break;
+      }
+
+      return allocators->pfnFree(allocators->pUserData, ptr);
+   } while (0);
+
+   return free(ptr);
+}

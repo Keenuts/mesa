@@ -4,10 +4,10 @@
 
 #include "icd.h"
 #include "memory.h"
+#include "util/macros.h"
 #include "vgl_entrypoints.h"
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
-#include "util/macros.h"
 
 static int initialize_physical_device(struct vk_physical_device *device)
 {
@@ -52,7 +52,7 @@ initialize_physical_devices(void)
    uint32_t device_count;
 
 
-   list_init(&icd_state.physical_devices.list);
+   LIST_INITHEAD(&icd_state.physical_devices.list);
 
    res = vtest_get_physical_device_count(icd_state.io_fd, &device_count);
    if (res < 0) {
@@ -67,14 +67,14 @@ initialize_physical_devices(void)
          return -2;
       }
 
-      list_init(&node->list);
+      LIST_INITHEAD(&node->list);
       node->device.identifier = i;
 
       if (initialize_physical_device(&node->device) != 0) {
           free(node);
           continue;
       }
-      list_append(&icd_state.physical_devices.list, &node->list);
+      LIST_ADDTAIL(&icd_state.physical_devices.list, &node->list);
    }
 
    return 0;
@@ -140,7 +140,7 @@ vgl_vkEnumeratePhysicalDevices(UNUSED VkInstance instance,
       return VK_SUCCESS;
    }
 
-   LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
+   LIST_FOR_EACH_ENTRY(it, &icd_state.physical_devices.list, list) {
       *physical_devices = TO_HANDLE(&it->device);
       physical_devices++;
    }
@@ -231,7 +231,7 @@ get_physical_device_per_id(uint32_t device_id)
 {
    struct vk_physical_device_list *it = NULL;
 
-   LIST_FOR_EACH(it, icd_state.physical_devices.list, list) {
+   LIST_FOR_EACH_ENTRY(it, &icd_state.physical_devices.list, list) {
       if (0 == device_id) {
          return &it->device;
       }

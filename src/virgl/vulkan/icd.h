@@ -13,11 +13,11 @@
 #define TO_HANDLE(Handle) (void*)(Handle)
 #define FROM_HANDLE(Dst, Src) (__typeof__(Dst))(Src)
 
-#include "common/list.h"
 #include "vk_structs.h"
+#include "util/list.h"
 
 struct vk_physical_device_list {
-   struct list list;
+   struct list_head list;
    struct vk_physical_device device;
 };
 

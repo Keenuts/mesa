@@ -49,7 +49,6 @@ debug_icd_json = custom_target(
     install : true,
 )
 
-subdir('common')
 subdir('vtest')
 
 if with_virgl_vk

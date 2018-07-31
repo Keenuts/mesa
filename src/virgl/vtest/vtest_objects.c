@@ -480,3 +480,28 @@ int vtest_queue_submit(uint32_t sock_fd,
    CHECK_IO_RESULT(res, sizeof(result));
    RETURN(result.error_code);
 }
+
+int vtest_destroy_object(uint32_t sock_fd,
+                         uint32_t device_handle,
+                         uint32_t object_handle)
+{
+   ssize_t res;
+   struct vtest_result result;
+   struct vtest_hdr cmd;
+   struct payload_destroy_object payload;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_DESTROY_OBJECT, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_handle = device_handle;
+   payload.object_handle = object_handle;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   return 0;
+}

@@ -125,6 +125,11 @@ struct payload_queue_submit {
    /* uint32_t signal_handles[]; */
 };
 
+struct payload_destroy_object {
+   uint32_t device_handle;
+   uint32_t object_handle;
+};
+
 /* Functions */
 
 int vtest_create_descriptor_set_layout(int sock_fd,
@@ -204,3 +209,7 @@ int vtest_queue_submit(uint32_t sock_fd,
                        uint32_t *wait_infos,
                        uint32_t *cmds_infos,
                        uint32_t *signal_handles);
+
+int vtest_destroy_object(uint32_t sock_fd,
+                         uint32_t device_handle,
+                         uint32_t object_handle);

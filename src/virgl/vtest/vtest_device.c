@@ -199,6 +199,29 @@ int vtest_create_device(int sock_fd,
    RETURN(result.result);
 }
 
+int vtest_destroy_device(int sock_fd,
+                         uint32_t device_id)
+{
+   struct vtest_hdr cmd;
+   struct vtest_payload_device_destroy payload;
+   struct vtest_result result;
+   ssize_t res;
+
+   INITIALIZE_HDR(cmd, VCMD_VK_DESTROY_DEVICE, sizeof(cmd));
+   res = virgl_block_write(sock_fd, &cmd, sizeof(cmd));
+   CHECK_IO_RESULT(res, sizeof(cmd));
+
+   payload.device_id = device_id;
+
+   res = virgl_block_write(sock_fd, &payload, sizeof(payload));
+   CHECK_IO_RESULT(res, sizeof(payload));
+
+   res = virgl_block_read(sock_fd, &result, sizeof(result));
+   CHECK_IO_RESULT(res, sizeof(result));
+
+   return result.result;
+}
+
 int vtest_read_memory(uint32_t sock_fd,
                       uint32_t device_handle,
                       uint32_t memory_handle,

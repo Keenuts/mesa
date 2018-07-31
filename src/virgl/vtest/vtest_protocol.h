@@ -77,9 +77,10 @@
 #define VCMD_VK_WAIT_FOR_FENCES                       29
 #define VCMD_VK_WRITE_DESCRIPTOR_SET                  30
 #define VCMD_VK_WRITE_MEMORY                          31
+#define VCMD_VK_DESTROY_OBJECT                        32
+#define VCMD_VK_DESTROY_DEVICE                        33
 
-
-#define VCMD_COMMAND_COUNT                            31
+#define VCMD_COMMAND_COUNT                            33
 
 #define VCMD_RES_CREATE_SIZE 10
 #define VCMD_RES_CREATE_RES_HANDLE 0
@@ -147,6 +148,10 @@ struct vtest_payload_device_create {
    VkPhysicalDeviceFeatures features;
 
    uint32_t queue_info_count;
+};
+
+struct vtest_payload_device_destroy {
+   uint32_t device_id;
 };
 
 struct vtest_payload_rw_memory {

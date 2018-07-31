@@ -599,150 +599,115 @@ vgl_vkQueueSubmit(VkQueue queue,
    RETURN(err);
 }
 
-void
-vgl_vkDestroyFence(VkDevice device,
-               VkFence fence,
-               const VkAllocationCallbacks *allocators)
+static void
+vgl_destroy_object(VkDevice device,
+                   uint32_t object_handle)
 {
-   TRACE_IN();
+   int res;
+   struct vk_device *vk_device = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(fence);
-   UNUSED_PARAMETER(allocators);
+   vk_device = FROM_HANDLE(vk_device, device);
+   res = vtest_destroy_object(icd_state.io_fd,
+                              vk_device->identifier,
+                              object_handle);
 
-   TRACE_OUT();
+   if (0 != res) {
+      fprintf(stderr,
+               "%s: error while deleting the object id=%d\n",
+              __func__,
+              object_handle);
+   }
 }
 
 void
-vgl_vkFreeMemory(VkDevice device,
-                 VkDeviceMemory memory,
-                 const VkAllocationCallbacks *allocators)
+vgl_vkDestroyFence(VkDevice device,
+                   VkFence vk_object,
+                   const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_fence *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(memory);
-   UNUSED_PARAMETER(allocators);
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
+}
 
-   TRACE_OUT();
+void
+vgl_vkFreeMemory(UNUSED VkDevice device,
+                 UNUSED VkDeviceMemory vk_object,
+                 UNUSED const VkAllocationCallbacks *allocators)
+{
+   //FIXME: FreeMemory
+   return;
 }
 
 void
 vgl_vkDestroyBuffer(VkDevice device,
-                    VkBuffer buffer,
+                    VkBuffer vk_object,
                     const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_buffer *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(buffer);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }
 
 void
 vgl_vkDestroyShaderModule(VkDevice device,
-                          VkShaderModule module,
+                          VkShaderModule vk_object,
                           const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_shader_module *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(module);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }
 
 void
 vgl_vkDestroyDescriptorPool(VkDevice device,
-                            VkDescriptorPool pool,
+                            VkDescriptorPool vk_object,
                             const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_descriptor_pool *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(pool);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }
 
 void
 vgl_vkDestroyDescriptorSetLayout(VkDevice device,
-                                 VkDescriptorSetLayout layout,
+                                 VkDescriptorSetLayout vk_object,
                                  const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_descriptor_set_layout *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(layout);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }
 
 void
 vgl_vkDestroyPipelineLayout(VkDevice device,
-                            VkPipelineLayout layout,
+                            VkPipelineLayout vk_object,
                             const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_pipeline_layout *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(layout);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }
 
 void
 vgl_vkDestroyPipeline(VkDevice device,
-                      VkPipeline pipeline,
+                      VkPipeline vk_object,
                       const VkAllocationCallbacks *allocators)
 {
-   TRACE_IN();
+   struct vk_pipeline *item = NULL;
 
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(pipeline);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
-}
-
-void
-vgl_vkDestroyCommandPool(VkDevice device,
-                         VkCommandPool pool,
-                         const VkAllocationCallbacks *allocators)
-{
-   TRACE_IN();
-
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(pool);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
-}
-
-void
-vgl_vkDestroyDevice(VkDevice device,
-                    const VkAllocationCallbacks *allocators)
-{
-   TRACE_IN();
-
-   fprintf(stderr, "%s is not implemented. FIXME\n", __func__);
-   UNUSED_PARAMETER(device);
-   UNUSED_PARAMETER(allocators);
-
-   TRACE_OUT();
+   item = FROM_HANDLE(item, vk_object);
+   vgl_destroy_object(device, item->identifier);
+   vk_free(allocators, item);
 }

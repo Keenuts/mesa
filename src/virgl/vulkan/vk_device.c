@@ -498,3 +498,19 @@ vgl_vkUnmapMemory(VkDevice device,
 
    RETURN();
 }
+
+void
+vgl_vkDestroyDevice(VkDevice device,
+                    const VkAllocationCallbacks *allocators)
+{
+   int res;
+   struct vk_device *vk_device = NULL;
+
+   vk_device = FROM_HANDLE(vk_device, device);
+
+   res = vtest_destroy_device(icd_state.io_fd, vk_device->identifier);
+   if (0 != res) {
+      fprintf(stderr, "device cleanup failed (%d).\n", res);
+   }
+   vk_free(allocators, vk_device);
+}

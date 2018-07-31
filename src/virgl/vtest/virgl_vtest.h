@@ -46,6 +46,10 @@ int vtest_create_device(int sock_fd,
                         uint32_t physical_device_id,
                         const VkDeviceCreateInfo *info,
                         uint32_t *id);
+
+int vtest_destroy_device(int sock_fd,
+                         uint32_t device_id);
+
 int vtest_get_device_queues(int sock_fd,
                             uint32_t device_id,
                             uint32_t *queue_count,

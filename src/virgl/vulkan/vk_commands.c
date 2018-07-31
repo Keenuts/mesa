@@ -8,6 +8,7 @@
 #include "vk_structs.h"
 #include "vtest/virgl_vtest.h"
 #include "vtest/vtest_commands.h"
+#include "vtest/vtest_objects.h"
 
 
 VkResult
@@ -264,4 +265,28 @@ vgl_vkEndCommandBuffer(VkCommandBuffer cmd)
    }
 
    RETURN(VK_SUCCESS);
+}
+
+void
+vgl_vkDestroyCommandPool(VkDevice device,
+                         VkCommandPool pool,
+                         const VkAllocationCallbacks *allocators)
+{
+   int res;
+   struct vk_device *vk_device = NULL;
+   struct vk_command_pool *vk_pool = NULL;
+
+   vk_pool = FROM_HANDLE(vk_pool, pool);
+   vk_device = FROM_HANDLE(vk_device, device);
+   res = vtest_destroy_object(icd_state.io_fd,
+                              vk_device->identifier,
+                              vk_pool->identifier);
+
+   if (0 != res) {
+      fprintf(stderr,
+               "%s: error while deleting the object id=%d\n",
+              __func__,
+              vk_pool->identifier);
+   }
+   vk_free(allocators, vk_pool);
 }
